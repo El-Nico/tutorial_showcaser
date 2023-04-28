@@ -15,6 +15,19 @@
     gap: 0.5rem;
 }
 
+.App {
+    width: 100vw;
+    height: auto;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+img {
+    width: 70vw;
+    margin: 10px;
+}
+
 .el {
     background-color: rebeccapurple;
     color: #fff;
