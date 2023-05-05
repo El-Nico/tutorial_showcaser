@@ -3,8 +3,34 @@ import { useState, useEffect } from "react";
 import { storage } from "./firebase";
 import { ref, uploadBytes, listAll, getDownloadURL } from "firebase/storage";
 import { v4 } from "uuid";
+import { tutorials } from "./utilities/keys";
+import { testa } from "./utilities/jszipcode";
+import {
+  URLtoFile,
+  downloadFile,
+  getgit,
+  getgit2,
+} from "./utilities/filewrangler";
+import { useNavigate } from "react-router-dom";
 
 function App() {
+  ////////////////////////zip stuff//////////
+  // testa();
+  //downloadFile(tutorials.css, "xy.zip");
+  // getgit("El-Nico", "css_tutorials", "README.md").then((data) => {
+  //   console.log("data shortly");
+  //   console.log(data);
+  // });
+  // const navigate = useNavigate();
+
+  // window.location.assign(
+  //   "https://github.com/El-Nico/css_tutorials/archive/refs/heads/main.zip"
+  // );
+
+  getgit2("El-Nico", "fewd_lab_3", "01_lesson").then((data) => {
+    console.log(data);
+  });
+  //////////////////end of zip stuff//////////////
   const [imageUpload, setImageUpload] = useState(null);
   const [imageList, setImageList] = useState([]);
 
@@ -19,25 +45,6 @@ function App() {
     //   });
     // });
     /////////////////////ma own jargon//////////////////////////////
-    async function URLtoFile(url) {
-      const res = await fetch(url);
-      const blob = await res.blob();
-      // Gets URL data and read to blob
-
-      console.log(blob);
-
-      const mime = blob.type;
-      const ext = mime.slice(mime.lastIndexOf("/") + 1, mime.length);
-      // Gets blob MIME type (e.g. image/png) and extracts extension
-
-      const file = new File([blob], `filename.${ext}`, {
-        type: mime,
-      });
-      // Creates new File object using blob data, extension and MIME type
-
-      console.log(file);
-      return file;
-    }
 
     const myFile = URLtoFile(
       "https://i.insider.com/602d763842b84000192f4072?width=1136&format=jpeg"
