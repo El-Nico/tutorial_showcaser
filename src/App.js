@@ -25,17 +25,21 @@ function App() {
           <span className="custom-arrow"></span>
         </div>
         <h1 class="logo">tutorial showcaser</h1>
-        <h1 class="about">About</h1>
+        {/* <div className="about"> */}
+        <h1>About</h1>
+        {/* </div> */}
       </header>
       <main class="container">
-        <div class="box">About</div>
-        <div class="box">
-          <iframe
-            src="https://www.nicholas-eruba.com"
-            title="W3Schools Free Online Web Tutorials"
-            width={"100%"}
-            height={"100%"}
-          ></iframe>
+        <div class="scroll">
+          <div class="box">About</div>
+          <div class="box box2">
+            <iframe
+              src="https://www.nicholas-eruba.com"
+              title="W3Schools Free Online Web Tutorials"
+              width={"100%"}
+              height={"100%"}
+            ></iframe>
+          </div>
         </div>
       </main>
       <aside class="sidebar el">

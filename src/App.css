@@ -13,20 +13,8 @@
     grid-auto-rows: 50px auto 50px;
     grid-template-areas: "hd hd hd hd hd hd hd hd hd" "sb sb mn mn mn mn mn mn mn " "ft ft ft ft ft ft ft ft ft";
     gap: 0.5rem;
-}
-
-
-/* .App {
-    width: 100vw;
-    height: auto;
-    display: flex;
-    align-items: center;
-    flex-direction: column;
-} */
-
-img {
-    width: 70vw;
-    margin: 10px;
+    /* background: #4d5061; */
+    /* padding: 0.5rem; */
 }
 
 .el {
@@ -42,12 +30,13 @@ img {
     justify-content: space-between;
     align-items: center;
     padding: 15px 20px;
+    /* margin-right: 0.5rem; */
 }
 
 .sidebar {
     grid-area: sb;
     background-color: #242443;
-    height: 100vh;
+    /* height: 100vh; */
 }
 
 .footer {
@@ -69,10 +58,10 @@ img {
 .box {
     color: #fff;
     font-size: 2rem;
-    padding: 0.5rem;
+    padding: 0;
     /* border: 1px linear-gradient( to bottom, #eee, #999) solid; */
-    border: 1rem grey dashed;
-    height: 100vh;
+    /* border: 1rem grey dashed; */
+    min-height: 100%;
 }
 
 .box:first-child {
@@ -95,10 +84,14 @@ img {
 
 .box:nth-child(2) {
     grid-column: 1 / 5;
+    width: 100%;
 }
 
+
+/* custom select */
+
 select {
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    /* box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); */
     font-size: 1rem;
     padding: 0.5em 7em 0.5em 0.75em;
     background: #4d5061;
@@ -150,12 +143,80 @@ select {
     top: 65%;
 }
 
-.about {
-    font-size: 1.5rem;
+
+/* end of custom select */
+
+
+/* .about {
+    background: #4d5061;
+    border-radius: 25px;
+    width: 237.35px;
+    text-align: center;
+    cursor: pointer;
+} */
+
+.about>h1 {
+    font-size: 1rem;
+    /* align-self: flex-end; */
+}
+
+.about>h1:hover {
+    background: #4d5061;
+    cursor: pointer;
 }
 
 .logo {
     color: orange;
+}
+
+
+/* scroll within main div */
+
+main {
+    /* margin-right: 0.5rem; */
+    /* box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); */
+}
+
+.scroll {
+    grid-column: 1/5;
+    overflow-y: scroll;
+    /* display: flex;
+    flex-direction: column; */
+    /* hide scrollbar 1 */
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* Internet Explorer 10+ */
+    border: 2px solid #3b3c47;
+}
+
+
+/* hide scrollbar 2 and done */
+
+.container::-webkit-scrollbar {
+    /* WebKit */
+    width: 0;
+    height: 0;
+}
+
+.box2 {
+    padding: 0;
+    height: 100%;
+}
+
+.box2>iframe {
+    border: none;
+    /* overflow-y: scroll;
+    scrollbar-width: none;/* Firefox */
+    /* -ms-overflow-style: none; */
+    /*Internet Explorer 10+*/
+    overflow: hidden;
+}
+
+.box2>iframe::-webkit-scrollbar {
+    /* WebKit */
+    width: 0;
+    height: 0;
 }
 
 

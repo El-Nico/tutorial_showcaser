@@ -72,6 +72,19 @@
       })} */
 }
 
+/* .App {
+    width: 100vw;
+    height: auto;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+} */
+
+// img {
+//   width: 70vw;
+//   margin: 10px;
+// }
+
 // .box:first-child {
 //     background-color: blue;
 //     /* define how many columns and rows this item takes */
