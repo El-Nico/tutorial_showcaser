@@ -109,3 +109,44 @@
 //     grid-column: 1 / 5;
 //     grid-row: 3 / 4;
 // }
+
+/* button:active{
+    background-color: orange;
+    border: none;
+}
+button::after {
+    content: "";
+    display: block;
+    position: absolute;
+    border-color: transparent;
+    border-style: solid;
+    border-left-color: #FED8B1;
+  
+    border-width: 1.57em;
+    top: 0;
+    left: 100%;
+  } */
+
+/* .important{
+    position: relative;
+}
+
+.important::after{
+content: '';
+position: absolute;
+background: pink;
+/* width: 5em;
+height: 5em; */
+/*left: 1em;
+top: 0;
+
+border-style: solid;
+border-width: 3em;
+
+/*border-left-color: red;
+border-right-color: blue;
+border-top-color: yellow;
+border-bottom-color: green;
+} */
+/* https://swizec.com/blog/getting-the-css-out-of-rendered-react-components/ */
+/* yeas the solution is to just modify the em value */

@@ -33,12 +33,6 @@
     /* margin-right: 0.5rem; */
 }
 
-.sidebar {
-    grid-area: sb;
-    background-color: #242443;
-    /* height: 100vh; */
-}
-
 .footer {
     grid-area: ft;
 }
@@ -219,5 +213,45 @@ main {
     height: 0;
 }
 
+/* sidebar menu */
+button{
+    background:none;
+  border: none;
+  border-bottom:1px solid #4d5061;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  width: 100%;
+  cursor: pointer;
+  /* position: relative; */
+}
+
+button:first-of-type{
+    background-color: orange;
+}
+
+button:hover{
+    background-color: #FED8B1;
+    /* translate: 10px 0 0; */
+    position: relative;
+    /* width: 24.2rem; */
+}
+
+
+
+
+
+.sidebar {
+    grid-area: sb;
+    background-color: #242443;
+    /* height: 100vh; */
+    place-content: start;
+    display: flex;
+    flex-direction: column;
+   /* place-content: center; */
+}
 
 /* gridgarden.com */
