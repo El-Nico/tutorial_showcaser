@@ -72,3 +72,44 @@
 //downloads a partial file of url? because its only a small chunk
 // const url =
 //   "https://codeload.github.com/El-Nico/css_tutorials/legacy.zip/refs/heads/main";
+
+{
+  /* <input
+type="text"
+placeholder="Name..."
+onChange={(e) => {
+  setNewName(e.target.value);
+}}
+/>
+<input
+type="number"
+placeholder="Age..."
+onChange={(e) => {
+  setNewAge(e.target.value);
+}}
+/>
+<button onClick={createUser}>Create User</button>
+{users.map((user) => {
+return (
+  <div>
+    {" "}
+    <h1>Name: {user.name}</h1>
+    <h1>Age: {user.age}</h1>
+    <button
+      onClick={() => {
+        updateUser(user.id, user.age);
+      }}
+    >
+      Increase Age
+    </button>
+    <button
+      onClick={() => {
+        deleteUser(user.id);
+      }}
+    >
+      Delete User
+    </button>
+  </div>
+);
+})} */
+}

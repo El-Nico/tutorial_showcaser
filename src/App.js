@@ -21,100 +21,64 @@ import {
   getDocs,
   updateDoc,
 } from "firebase/firestore";
+import { getCourses } from "./utilities/firestoreCRUD";
 
 function App() {
-  // const [courses, updateCourses] = useState([]);
-  // useEffect(() => {
-  //   getCourses().then((coursesData) => {
-  //     updateCourses([...courses, coursesData]);
-  //   });
-  // }, [courses]);
+  const [courses, updateCourses] = useState([]);
+  const [defaultCourse, updateDefaultCourse] = useState("");
+  const [selectOptions, updateSelectOptions] = useState([
+    { label: "course 01", value: "placeholder" },
+  ]);
 
-  ////////////////////////////////////testing db//////////////////////////////////
-  //create states
-  const [newName, setNewName] = useState("");
-  const [newAge, setNewAge] = useState(0);
-  //end of create states
-  const [users, setUsers] = useState([]);
-  const usersCollectionRef = collection(db, "users");
+  //get courses
   useEffect(() => {
-    const getUsers = async () => {
-      const data = await getDocs(usersCollectionRef);
-      setUsers(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
-    };
-    getUsers();
+    getCourses()
+      ///update courses state
+      .then((coursesData) => {
+        updateCourses([...coursesData]);
+        return coursesData;
+      });
   }, []);
 
-  const updateUser = async (id, age) => {
-    const userDoc = doc(db, "users", id);
-    const newFields = { age: age + 1 };
-    await updateDoc(userDoc, newFields);
-  };
+  //render courses select options
+  useEffect(() => {
+    const selectOptions = courses.map((course) => {
+      if (course.default) updateDefaultCourse(course.title);
 
-  const createUser = async () => {
-    await addDoc(usersCollectionRef, { name: newName, age: Number(newAge) });
-  };
+      return { label: course.title, value: course.title, id: course.id };
+    });
+    updateSelectOptions([...selectOptions]);
+  }, [courses]);
 
-  const deleteUser = async (id) => {
-    const userDoc = doc(db, "users", id);
-    await deleteDoc(userDoc);
-  };
-  //////////////////////////////nd of testing db////////////////////////////////////////
+  // make api call to github for render courses lessons
+  useEffect(() => {}, [defaultCourse]);
+
+  //make api call for course ifram
   return (
     <div className="App">
-      <header class="header el">
+      <header className="header el">
         <div className="custom-select">
-          <select>
-            <option value="">React Course</option>
-            <option value="">CSS Tutorials</option>
+          <select
+            value={defaultCourse}
+            onChange={(e) => updateDefaultCourse(e.target.value)}
+          >
+            {selectOptions.map((option) => (
+              <option key={option.id} value={option.value}>
+                {option.label}
+              </option>
+            ))}
           </select>
           <span className="custom-arrow"></span>
         </div>
-        <h1 class="logo">tutorial showcaser</h1>
+        <h1 className="logo">tutorial showcaser</h1>
+        <h3>About</h3>
       </header>
-      <main class="container">
-        <div class="scroll">
-          <div class="box about-box">
-            <input
-              type="text"
-              placeholder="Name..."
-              onChange={(e) => {
-                setNewName(e.target.value);
-              }}
-            />
-            <input
-              type="number"
-              placeholder="Age..."
-              onChange={(e) => {
-                setNewAge(e.target.value);
-              }}
-            />
-            <button onClick={createUser}>Create User</button>
-            {users.map((user) => {
-              return (
-                <div>
-                  {" "}
-                  <h1>Name: {user.name}</h1>
-                  <h1>Age: {user.age}</h1>
-                  <button
-                    onClick={() => {
-                      updateUser(user.id, user.age);
-                    }}
-                  >
-                    Increase Age
-                  </button>
-                  <button
-                    onClick={() => {
-                      deleteUser(user.id);
-                    }}
-                  >
-                    Delete User
-                  </button>
-                </div>
-              );
-            })}
+      <main className="container">
+        <div className="scroll">
+          <div className="box about-box">
+            <h1>About</h1>
           </div>
-          <div class="box box2">
+          <div className="box box2">
             <iframe
               src="https://www.nicholas-eruba.com"
               title="W3Schools Free Online Web Tutorials"
@@ -124,9 +88,9 @@ function App() {
           </div>
         </div>
       </main>
-      <aside class="sidebar el">{/* {courseList} */}</aside>
+      <aside className="sidebar el">{/* {courseList} */}</aside>
 
-      <footer class="footer el">
+      <footer className="footer el">
         <h2>Footer</h2>
       </footer>
     </div>
