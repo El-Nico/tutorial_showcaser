@@ -21,7 +21,8 @@ import {
   getDocs,
   updateDoc,
 } from "firebase/firestore";
-import { getCourses } from "./utilities/firestoreCRUD";
+import { getCourses } from "./utilities/firestore-crud";
+import { getLessons } from "./utilities/github-api";
 
 function App() {
   const [courses, updateCourses] = useState([]);
@@ -29,6 +30,7 @@ function App() {
   const [selectOptions, updateSelectOptions] = useState([
     { label: "course 01", value: "placeholder" },
   ]);
+  const [lessons, updateLessons] = useState([]);
 
   //get courses
   useEffect(() => {
@@ -51,7 +53,17 @@ function App() {
   }, [courses]);
 
   // make api call to github for render courses lessons
-  useEffect(() => {}, [defaultCourse]);
+  useEffect(() => {
+    async function fetchLessonData() {
+      const lessonData = await getLessons(defaultCourse);
+      if (lessonData) {
+        const mappedLessonData = lessonData.data.map((lesson) => lesson.name);
+        updateLessons(mappedLessonData);
+      }
+    }
+    fetchLessonData();
+    console.log(lessons);
+  }, [defaultCourse]);
 
   //make api call for course ifram
   return (
@@ -88,7 +100,11 @@ function App() {
           </div>
         </div>
       </main>
-      <aside className="sidebar el">{/* {courseList} */}</aside>
+      <aside className="sidebar el">
+        {lessons.map((lesson) => (
+          <button>{lesson}</button>
+        ))}
+      </aside>
 
       <footer className="footer el">
         <h2>Footer</h2>

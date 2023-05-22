@@ -80,7 +80,7 @@ export async function getgit(owner, repo, path) {
     {
       mode: "cors",
       headers: new Headers({
-        auth: "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",
+        auth: "REDACTED",
       }),
     }
   )
@@ -106,7 +106,7 @@ export async function getgit(owner, repo, path) {
 
 // export async function getgit2(owner, repo, path) {
 //   const octokit = new Octokit({
-//     auth: "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",
+//     auth: "REDACTED",
 //   });
 
 //   let data = await octokit
@@ -136,7 +136,7 @@ export async function getgit(owner, repo, path) {
 
 export async function getgit2(owner, repo, path) {
   const octokit = new Octokit({
-    auth: "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",
+    auth: "REDACTED",
   });
 
   let data = await octokit.request("GET /repos/{owner}/{repo}/zipball", {
