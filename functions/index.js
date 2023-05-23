@@ -62,3 +62,14 @@ async function unzip(url, dest) {
     console.log(error);
   }
 }
+
+////////////////////////////the begging of the end///////////////////////////
+exports.testHost = functions.https.onRequest(async (req, res) => {
+  const url =
+    "https://firebasehosting.googleapis.com/v1beta1/projects/tutorial-showcaser/sites/tutorial-showcaser";
+  https.get(url, function (response) {
+    console.log(response);
+    res.json({ struggle: `wee wee check con log` });
+  });
+});
+//////////////////////////end of the begging of the end/////////////////////
