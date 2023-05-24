@@ -1,3 +1,5 @@
+require("dotenv").config();
+console.log(process.env);
 const functions = require("firebase-functions");
 // The Firebase Admin SDK to access Firestore.
 const admin = require("firebase-admin");
@@ -6,6 +8,33 @@ admin.initializeApp();
 const fs = require("fs");
 const https = require("https");
 const decompress = require("decompress");
+const { google } = require("googleapis");
+
+function getAccessToken() {
+  var SCOPES = [
+    "https://www.googleapis.com/auth/cloud-platform",
+    "https://www.googleapis.com/auth/cloud-platform.read-only",
+    "https://www.googleapis.com/auth/firebase",
+    "https://www.googleapis.com/auth/firebase.readonly",
+  ];
+  return new Promise(function (resolve, reject) {
+    var key = require("./tutorial-showcaser-firebase-adminsdk-1fdyi-f647ec7670.json");
+    var jwtClient = new google.auth.JWT(
+      key.client_email,
+      null,
+      key.private_key,
+      SCOPES,
+      null
+    );
+    jwtClient.authorize(function (err, tokens) {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(tokens.access_token);
+    });
+  });
+}
 
 function download(url, dest, cb) {
   const file = fs.createWriteStream(dest);
@@ -65,11 +94,50 @@ async function unzip(url, dest) {
 
 ////////////////////////////the begging of the end///////////////////////////
 exports.testHost = functions.https.onRequest(async (req, res) => {
-  const url =
-    "https://firebasehosting.googleapis.com/v1beta1/projects/tutorial-showcaser/sites/tutorial-showcaser";
-  https.get(url, function (response) {
-    console.log(response);
-    res.json({ struggle: `wee wee check con log` });
+  // const url =
+  //   "https://firebasehosting.googleapis.com/v1beta1/projects/tutorial-showcaser/sites/tutorial-showcaser";
+  // https.get(url, function (response) {
+  //   console.log(response);
+  //   res.json({ struggle: `wee wee check con log` });
+  // });
+
+  getAccessToken().then((token) => {
+    makeRequest("tutorial-showcaser", token);
   });
 });
+
+function makeRequest(site_id, access_token) {
+  const options = {
+    method: "POST",
+    hostname: "firebasehosting.googleapis.com",
+    port: null,
+    path: `/v1beta1/sites/${site_id}/versions`,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${access_token}`,
+    },
+  };
+
+  const req = https.request(options, function (res) {
+    const chunks = [];
+
+    res.on("data", function (chunk) {
+      chunks.push(chunk);
+    });
+
+    res.on("end", function () {
+      const body = Buffer.concat(chunks);
+      console.log(body.toString());
+    });
+  });
+
+  req.write(
+    JSON.stringify({
+      config: {
+        headers: [{ glob: "**", headers: { "Cache-Control": "max-age=1800" } }],
+      },
+    })
+  );
+  req.end();
+}
 //////////////////////////end of the begging of the end/////////////////////

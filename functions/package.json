@@ -6,7 +6,9 @@
     "shell": "firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "prebuild": "node generate-google-api-credentials.js",
+    "preserve": "node generate-google-api-credentials.js"
   },
   "engines": {
     "node": "16"
@@ -15,8 +17,10 @@
   "dependencies": {
     "async-get-file": "^1.0.4",
     "decompress": "^4.2.1",
+    "dotenv": "^16.0.3",
     "firebase-admin": "^11.5.0",
-    "firebase-functions": "^4.2.0"
+    "firebase-functions": "^4.2.0",
+    "googleapis": "^118.0.0"
   },
   "devDependencies": {
     "firebase-functions-test": "^3.0.0"
