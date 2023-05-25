@@ -9,6 +9,7 @@ const fs = require("fs");
 const https = require("https");
 const decompress = require("decompress");
 const { google } = require("googleapis");
+const crypto = require("crypto");
 
 function getAccessToken() {
   var SCOPES = [
@@ -101,9 +102,11 @@ exports.testHost = functions.https.onRequest(async (req, res) => {
   //   res.json({ struggle: `wee wee check con log` });
   // });
 
-  getAccessToken().then((token) => {
-    makeRequest("tutorial-showcaser", token);
-  });
+  // getAccessToken().then((token) => {
+  //   makeRequest("tutorial-showcaser", token);
+  // });
+  const fileList = ["./15_css_grid/index.html", "./15_css_grid/style.css"];
+  console.log(createFileHashes(fileList));
 });
 
 function makeRequest(site_id, access_token) {
@@ -135,6 +138,58 @@ function makeRequest(site_id, access_token) {
     JSON.stringify({
       config: {
         headers: [{ glob: "**", headers: { "Cache-Control": "max-age=1800" } }],
+      },
+    })
+  );
+  req.end();
+}
+
+function createFileHashes(fileList) {
+  const mappedFileList = fileList.map((url) => {
+    const fileBuffer = fs.readFileSync(url);
+    const hashSum = crypto.createHash("sha256");
+    hashSum.update(fileBuffer);
+
+    const hex = hashSum.digest("hex");
+    return { url: url, hex: hex };
+  });
+  return mappedFileList;
+}
+
+function uploadHashesRequest() {
+  const options = {
+    method: "POST",
+    hostname: "firebasehosting.googleapis.com",
+    port: null,
+    path: "/v1beta1/sites/SITE_ID/versions/VERSION_ID:populateFiles",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer ACCESS_TOKEN\n\n",
+    },
+  };
+
+  const req = https.request(options, function (res) {
+    const chunks = [];
+
+    res.on("data", function (chunk) {
+      chunks.push(chunk);
+    });
+
+    res.on("end", function () {
+      const body = Buffer.concat(chunks);
+      console.log(body.toString());
+    });
+  });
+
+  req.write(
+    JSON.stringify({
+      files: {
+        "/file1":
+          "66d61f86bb684d0e35f94461c1f9cf4f07a4bb3407bfbd80e518bd44368ff8f4",
+        "/file2":
+          "490423ebae5dcd6c2df695aea79f1f80555c62e535a2808c8115a6714863d083",
+        "/file3":
+          "59cae17473d7dd339fe714f4c6c514ab4470757a4fe616dfdb4d81400addf315",
       },
     })
   );
