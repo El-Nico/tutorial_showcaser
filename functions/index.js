@@ -10,6 +10,7 @@ const https = require("https");
 const decompress = require("decompress");
 const { google } = require("googleapis");
 const crypto = require("crypto");
+const { gzip, ungzip } = require("node-gzip");
 
 function getAccessToken() {
   var SCOPES = [
@@ -94,20 +95,66 @@ async function unzip(url, dest) {
 }
 
 ////////////////////////////the begging of the end///////////////////////////
-exports.testHost = functions.https.onRequest(async (req, res) => {
-  // const url =
-  //   "https://firebasehosting.googleapis.com/v1beta1/projects/tutorial-showcaser/sites/tutorial-showcaser";
-  // https.get(url, function (response) {
-  //   console.log(response);
-  //   res.json({ struggle: `wee wee check con log` });
-  // });
+exports.testHost = functions
+  .runWith({
+    // Ensure the function has enough memory and time
+    // to process large files
+    timeoutSeconds: 300,
+    memory: "1GB",
+  })
+  .https.onRequest(async (req, res) => {
+    // const url =
+    //   "https://firebasehosting.googleapis.com/v1beta1/projects/tutorial-showcaser/sites/tutorial-showcaser";
+    // https.get(url, function (response) {
+    //   console.log(response);
+    //   res.json({ struggle: `wee wee check con log` });
+    // });
+    // getAccessToken().then((token) => {
+    //   makeRequest("iframe-test-id", token);
+    // });
+    // getAccessToken().then((token) => {
+    //   const fileList = ["./15_css_grid/index.html", "./15_css_grid/style.css"];
+    //   createFileHashes(fileList).then((data) => {
+    //     console.log(data);
+    //     uploadHashesRequest(data, "iframe-test-id", "70e03146bcbb15b5", token);
+    //   });
+    // });
 
-  // getAccessToken().then((token) => {
-  //   makeRequest("tutorial-showcaser", token);
-  // });
-  const fileList = ["./15_css_grid/index.html", "./15_css_grid/style.css"];
-  console.log(createFileHashes(fileList));
-});
+    // fix not getting 200 here
+    // getAccessToken().then((token) => {
+    //   const fileBuffer = fs.readFileSync("./15_css_grid/index.html");
+    //   gzip(fileBuffer)
+    //     .then((compressed) => {
+    //       uploadFiles(
+    //         compressed,
+    //         "57a727c8c0b8d8d13d521410410a1a2f5235ffce100b147e2d47bea215813a33",
+    //         "iframe-test-id",
+    //         "70e03146bcbb15b5",
+    //         token
+    //       );
+    //     })
+    //     .then(() => {
+    //       const fileBuffer2 = fs.readFileSync("./15_css_grid/style.css");
+    //       gzip(fileBuffer2).then((compressed) => {
+    //         uploadFiles(
+    //           compressed,
+    //           "dc806bd6d94fc51406e56bfc5c98b26c36420a6067afb0bc87c1915be371122f",
+    //           "iframe-test-id",
+    //           "70e03146bcbb15b5",
+    //           token
+    //         );
+    //       });
+    //     });
+    // });
+
+    // getAccessToken().then((token) => {
+    //   patchVersion(token, "iframe-test-id", "70e03146bcbb15b5");
+    // });
+
+    getAccessToken().then((token) => {
+      deploy(token, "iframe-test-id", "70e03146bcbb15b5");
+    });
+  });
 
 function makeRequest(site_id, access_token) {
   const options = {
@@ -144,27 +191,31 @@ function makeRequest(site_id, access_token) {
   req.end();
 }
 
-function createFileHashes(fileList) {
-  const mappedFileList = fileList.map((url) => {
-    const fileBuffer = fs.readFileSync(url);
-    const hashSum = crypto.createHash("sha256");
-    hashSum.update(fileBuffer);
-
-    const hex = hashSum.digest("hex");
-    return { url: url, hex: hex };
-  });
+async function createFileHashes(fileList) {
+  const mappedFileList = await Promise.all(
+    fileList.map((url) => {
+      const fileBuffer = fs.readFileSync(url);
+      const hashSum = crypto.createHash("sha256");
+      return gzip(fileBuffer).then((compressed) => {
+        hashSum.update(compressed);
+        const hex = hashSum.digest("hex");
+        return { url: url, hex: hex };
+      });
+    })
+  );
+  console.log(mappedFileList);
   return mappedFileList;
 }
 
-function uploadHashesRequest() {
+function uploadHashesRequest(fileList, site_id, version_id, access_token) {
   const options = {
     method: "POST",
     hostname: "firebasehosting.googleapis.com",
     port: null,
-    path: "/v1beta1/sites/SITE_ID/versions/VERSION_ID:populateFiles",
+    path: `/v1beta1/sites/${site_id}/versions/${version_id}:populateFiles`,
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer ACCESS_TOKEN\n\n",
+      Authorization: `Bearer ${access_token}`,
     },
   };
 
@@ -181,18 +232,109 @@ function uploadHashesRequest() {
     });
   });
 
+  let files = {};
+  fileList.forEach((f) => {
+    files[f.url.substring(1)] = f.hex;
+  });
+  console.log(files);
   req.write(
     JSON.stringify({
-      files: {
-        "/file1":
-          "66d61f86bb684d0e35f94461c1f9cf4f07a4bb3407bfbd80e518bd44368ff8f4",
-        "/file2":
-          "490423ebae5dcd6c2df695aea79f1f80555c62e535a2808c8115a6714863d083",
-        "/file3":
-          "59cae17473d7dd339fe714f4c6c514ab4470757a4fe616dfdb4d81400addf315",
-      },
+      files: files,
     })
   );
+  req.end();
+}
+
+// must be done individually
+async function uploadFiles(
+  fileUrl,
+  file_hash,
+  site_id,
+  version_id,
+  access_token
+) {
+  const options = {
+    method: "POST",
+    hostname: "upload-firebasehosting.googleapis.com",
+    port: null,
+    path: `/upload/sites/${site_id}/versions/${version_id}/files/${file_hash}`,
+    headers: {
+      Authorization: `Bearer ${access_token}`,
+      "Content-Type": "application/octet-stream",
+    },
+  };
+
+  const req = https.request(options, function (res) {
+    const chunks = [];
+
+    res.on("data", function (chunk) {
+      chunks.push(chunk);
+    });
+
+    res.on("end", function () {
+      const body = Buffer.concat(chunks);
+      console.log(body.toString());
+      console.log("the function has apperently ended");
+    });
+  });
+
+  req.write(fileUrl);
+  req.end();
+}
+
+function patchVersion(access_token, site_id, version_id) {
+  const options = {
+    method: "PATCH",
+    hostname: "firebasehosting.googleapis.com",
+    port: null,
+    path: `/v1beta1/sites/${site_id}/versions/${version_id}?update_mask=status`,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${access_token}`,
+    },
+  };
+
+  const req = https.request(options, function (res) {
+    const chunks = [];
+
+    res.on("data", function (chunk) {
+      chunks.push(chunk);
+    });
+
+    res.on("end", function () {
+      const body = Buffer.concat(chunks);
+      console.log(body.toString());
+    });
+  });
+
+  req.write(JSON.stringify({ status: "FINALIZED" }));
+  req.end();
+}
+
+function deploy(access_token, site_id, version_id) {
+  const options = {
+    method: "POST",
+    hostname: "firebasehosting.googleapis.com",
+    port: null,
+    path: `/v1beta1/sites/${site_id}/releases?versionName=sites/${site_id}/versions/${version_id}`,
+    headers: {
+      Authorization: `Bearer ${access_token}`,
+    },
+  };
+
+  const req = https.request(options, function (res) {
+    const chunks = [];
+
+    res.on("data", function (chunk) {
+      chunks.push(chunk);
+    });
+
+    res.on("end", function () {
+      const body = Buffer.concat(chunks);
+      console.log(body.toString());
+    });
+  });
+
   req.end();
 }
 //////////////////////////end of the begging of the end/////////////////////
