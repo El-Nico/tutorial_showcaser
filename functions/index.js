@@ -1,5 +1,4 @@
 require("dotenv").config();
-console.log(process.env);
 const functions = require("firebase-functions");
 // The Firebase Admin SDK to access Firestore.
 const admin = require("firebase-admin");
@@ -11,6 +10,28 @@ const decompress = require("decompress");
 const { google } = require("googleapis");
 const crypto = require("crypto");
 const { gzip, ungzip } = require("node-gzip");
+const { MY_APP } = require("./application_constants");
+const {
+  createPreviewChannel,
+  deletePreviewChannel,
+} = require("./hosting-api-crud");
+
+exports.doSummat = functions
+  .runWith({
+    // Ensure the function has enough memory and time
+    // to process large files
+    timeoutSeconds: 60,
+    memory: "1GB",
+  })
+  .https.onRequest(async (req, res) => {
+    getAccessToken().then((token) => {
+      const site_id = MY_APP.SITE_ID;
+      // createPreviewChannel(site_id, token, "eatdapupu");
+      //done successfully, channelId is literally just the name
+      deletePreviewChannel(site_id, token, "eatdapupu");
+    });
+    // res.end("done");
+  });
 
 function getAccessToken() {
   var SCOPES = [
