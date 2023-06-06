@@ -141,76 +141,220 @@ exports.deletePreviewChannel = function (site_id, access_token, channelId) {
 ////////////////////////////version/deploy API and CRUD///////////////////////////
 //create version
 exports.createVersion = function (site_id, access_token) {
-  //   //create a versopm
-  //   const options = {
-  //     method: "POST",
-  //     hostname: "firebasehosting.googleapis.com",
-  //     port: null,
-  //     path: `/v1beta1/sites/${site_id}/versions`,
-  //     headers: {
-  //       "Content-Type": "application/json",
-  //       Authorization: `Bearer ${access_token}`,
-  //     },
-  //   };
-  //   const req = https.request(options, function (res) {
-  //     const chunks = [];
-  //     res.on("data", function (chunk) {
-  //       chunks.push(chunk);
-  //     });
-  //     res.on("end", function () {
-  //       const body = Buffer.concat(chunks);
-  //       console.log(body.toString());
-  //     });
-  //   });
-  //   req.write(
-  //     JSON.stringify({
-  //       config: {
-  //         headers: [{ glob: "**", headers: { "Cache-Control": "max-age=1800" } }],
-  //       },
-  //     })
-  //   );
-  //   req.end();
+  return new Promise((resolve, reject) => {
+    //create a versopm
+    const options = {
+      method: "POST",
+      hostname: "firebasehosting.googleapis.com",
+      port: null,
+      path: `/v1beta1/sites/${site_id}/versions`,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${access_token}`,
+      },
+    };
+    const req = https.request(options, function (res) {
+      const chunks = [];
+      res.on("data", function (chunk) {
+        chunks.push(chunk);
+      });
+      res.on("end", function () {
+        const body = Buffer.concat(chunks);
+        console.log(body.toString());
+        resolve(body);
+      });
+    });
+    req.write(
+      JSON.stringify({
+        config: {
+          headers: [
+            { glob: "**", headers: { "Cache-Control": "max-age=1800" } },
+          ],
+        },
+      })
+    );
+    req.end();
+  });
+};
+
+exports.populateVersionFiles = function (
+  files,
+  site_id,
+  version_id,
+  access_token
+) {
+  return new Promise((resolve, reject) => {
+    //specify files for version
+    const options = {
+      method: "POST",
+      hostname: "firebasehosting.googleapis.com",
+      port: null,
+      path: `/v1beta1/sites/${site_id}/versions/${version_id}:populateFiles`,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${access_token}`,
+      },
+    };
+    const req = https.request(options, function (res) {
+      const chunks = [];
+      res.on("data", function (chunk) {
+        chunks.push(chunk);
+      });
+      res.on("end", function () {
+        const body = Buffer.concat(chunks);
+        console.log(body.toString());
+        resolve(body);
+      });
+    });
+    req.write(
+      JSON.stringify({
+        files: files,
+      })
+    );
+    req.end();
+  });
+};
+
+exports.uploadVersionFiles = function (
+  //upload specifid files for version serially
+  fileUrl,
+  file_hash,
+  site_id,
+  version_id,
+  access_token
+) {
+  return new Promise((resolve, reject) => {
+    const options = {
+      method: "POST",
+      hostname: "upload-firebasehosting.googleapis.com",
+      port: null,
+      path: `/upload/sites/${site_id}/versions/${version_id}/files/${file_hash}`,
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+        "Content-Type": "application/octet-stream",
+      },
+    };
+
+    const req = https.request(options, function (res) {
+      const chunks = [];
+
+      res.on("data", function (chunk) {
+        chunks.push(chunk);
+      });
+
+      res.on("end", function () {
+        const body = Buffer.concat(chunks);
+        console.log(body.toString());
+        resolve(body);
+      });
+    });
+
+    req.write(fileUrl);
+    req.end();
+  });
+};
+
+exports.finalizeVersion = function (access_token, site_id, version_id) {
+  return new Promise((resolve, reject) => {
+    //confirm that the version is finalized
+    const options = {
+      method: "PATCH",
+      hostname: "firebasehosting.googleapis.com",
+      port: null,
+      path: `/v1beta1/sites/${site_id}/versions/${version_id}?update_mask=status`,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${access_token}`,
+      },
+    };
+
+    const req = https.request(options, function (res) {
+      const chunks = [];
+
+      res.on("data", function (chunk) {
+        chunks.push(chunk);
+      });
+
+      res.on("end", function () {
+        const body = Buffer.concat(chunks);
+        console.log(body.toString());
+        resolve(body);
+      });
+    });
+
+    req.write(JSON.stringify({ status: "FINALIZED" }));
+    req.end();
+  });
+};
+
+exports.create_deployRelease = function (
+  access_token,
+  site_id,
+  version_id,
+  channelId
+) {
+  return new Promise((resolve, reject) => {
+    //deploy finalized files
+    const options = {
+      method: "POST",
+      hostname: "firebasehosting.googleapis.com",
+      port: null,
+      path: `/v1beta1/sites/${site_id}/channels/${channelId}/releases?versionName=sites/${site_id}/versions/${version_id}`,
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    };
+
+    const req = https.request(options, function (res) {
+      const chunks = [];
+
+      res.on("data", function (chunk) {
+        chunks.push(chunk);
+      });
+
+      res.on("end", function () {
+        const body = Buffer.concat(chunks);
+        console.log(body.toString());
+        resolve(body);
+      });
+    });
+
+    req.end();
+  });
 };
 
 exports.deleteVersion = function (site_id, access_token, version_id) {
-  return new Promise((resolve, reject) => {});
+  return new Promise((resolve, reject) => {
+    const options = {
+      method: "DELETE",
+      hostname: "firebasehosting.googleapis.com",
+      port: null,
+      path: `/v1beta1/sites/${site_id}/versions/${version_id}`,
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    };
+
+    const req = https.request(options, function (res) {
+      const chunks = [];
+
+      res.on("data", function (chunk) {
+        chunks.push(chunk);
+      });
+
+      res.on("end", function () {
+        const body = Buffer.concat(chunks);
+        const bodyString = body.toString();
+        console.log(bodyString);
+        resolve(body);
+      });
+    });
+
+    req.end();
+  });
 };
+
 ////////////////////////////end of version/deploy API and CRUD///////////////////////////
-// function makeRequest(site_id, access_token) {
-//   //create a versopm
-//   const options = {
-//     method: "POST",
-//     hostname: "firebasehosting.googleapis.com",
-//     port: null,
-//     path: `/v1beta1/sites/${site_id}/versions`,
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${access_token}`,
-//     },
-//   };
-
-//   const req = https.request(options, function (res) {
-//     const chunks = [];
-
-//     res.on("data", function (chunk) {
-//       chunks.push(chunk);
-//     });
-
-//     res.on("end", function () {
-//       const body = Buffer.concat(chunks);
-//       console.log(body.toString());
-//     });
-//   });
-
-//   req.write(
-//     JSON.stringify({
-//       config: {
-//         headers: [{ glob: "**", headers: { "Cache-Control": "max-age=1800" } }],
-//       },
-//     })
-//   );
-//   req.end();
-// }
 
 // function uploadHashesRequest(fileList, site_id, version_id, access_token) {
 //   //specify files for version
