@@ -112,4 +112,46 @@ return (
   </div>
 );
 })} */
+  // getAccessToken().then((token) => {
+  //   const site_id = MY_APP.SITE_ID;
+  //   // createPreviewChannel(site_id, token, "eatdapupu");
+  //   //done successfully, channelId is literally just the name
+  //   deletePreviewChannel(site_id, token, "eatdapupu");
+  // });
+  // res.end("done");
 }
+
+// function download(url, dest, cb) {
+//   const file = fs.createWriteStream(dest);
+//   const request = https
+//     .get(url, function (response) {
+//       response.pipe(file);
+//       file.on("finish", function () {
+//         file.close(cb); // close() is async, call cb after close completes.
+//       });
+//     })
+//     .on("error", function (err) {
+//       // Handle errors
+//       fs.unlink(dest); // Delete the file async. (But we don't check the result)
+//       if (cb) cb(err.message);
+//     });
+// }
+
+// file.on("finish", function () {
+//   //   console.log("sub download finsisheshe from inside sub download");
+//   //   file.close(function () {
+//   //     const zipFolder = fs
+//   //       .readdirSync(dest, { withFileTypes: true })
+//   //       .filter((item) => item.isDirectory())
+//   //       .map((item) => item.name)[0];
+//   //     const zipFolderUrl = dest + "/" + zipFolder;
+//   //     resolve(zipFolderUrl);
+//   //   }); // close() is async, call cb after close completes.
+//   file.close();
+//   const zipFolder = fs
+//     .readFileSync(dest, { withFileTypes: true })
+//     .filter((item) => item.isDirectory())
+//     .map((item) => item.name)[0];
+//   const zipFolderUrl = dest + "/" + zipFolder;
+//   resolve(zipFolderUrl);
+// });

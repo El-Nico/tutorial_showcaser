@@ -215,7 +215,7 @@ exports.populateVersionFiles = function (
   });
 };
 
-exports.uploadVersionFiles = function (
+exports.uploadVersionFile = function (
   //upload specifid files for version serially
   fileUrl,
   file_hash,

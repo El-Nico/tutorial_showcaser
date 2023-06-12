@@ -15,23 +15,7 @@ const {
   createPreviewChannel,
   deletePreviewChannel,
 } = require("./hosting-api-crud");
-
-exports.doSummat = functions
-  .runWith({
-    // Ensure the function has enough memory and time
-    // to process large files
-    timeoutSeconds: 60,
-    memory: "1GB",
-  })
-  .https.onRequest(async (req, res) => {
-    getAccessToken().then((token) => {
-      const site_id = MY_APP.SITE_ID;
-      // createPreviewChannel(site_id, token, "eatdapupu");
-      //done successfully, channelId is literally just the name
-      deletePreviewChannel(site_id, token, "eatdapupu");
-    });
-    // res.end("done");
-  });
+var path = require("path");
 
 function getAccessToken() {
   var SCOPES = [
@@ -59,60 +43,25 @@ function getAccessToken() {
   });
 }
 
-function download(url, dest, cb) {
-  const file = fs.createWriteStream(dest);
-  const request = https
-    .get(url, function (response) {
-      response.pipe(file);
-      file.on("finish", function () {
-        file.close(cb); // close() is async, call cb after close completes.
+function download(url, dest) {
+  console.log("inside sub download function");
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(dest);
+    const request = https
+      .get(url, function (response) {
+        response.pipe(file);
+        file.on("finish", function () {
+          console.log("sub download finsisheshe from inside sub download");
+          file.close(); // close() is async, call cb after close completes.
+          resolve(dest);
+        });
+      })
+      .on("error", function (err) {
+        // Handle errors
+        fs.unlink(dest); // Delete the file async. (But we don't check the result)
+        reject(err.message);
       });
-    })
-    .on("error", function (err) {
-      // Handle errors
-      fs.unlink(dest); // Delete the file async. (But we don't check the result)
-      if (cb) cb(err.message);
-    });
-}
-
-// Download latest archive from GitHub to temp folder
-const dest = "./css_tutorials.zip";
-const url =
-  "https://github.com/El-Nico/react_course/archive/refs/heads/main.zip";
-
-exports.download = functions
-  .runWith({
-    // Ensure the function has enough memory and time
-    // to process large files
-    timeoutSeconds: 300,
-    memory: "1GB",
-  })
-  .https.onRequest(async (req, res) => {
-    // Grab the text parameter.
-    // const original = req.query.text;
-
-    const dest = "./temp.zip";
-    const url =
-      "https://codeload.github.com/El-Nico/css_tutorials/legacy.zip/refs/heads/main";
-
-    download(url, dest, function () {
-      console.log(" zip download done");
-      unzip("temp.zip", "public").then(() => {
-        //perform file system operations, remove containing folder, get a list of all the names of the folders
-        res.json({ result: `files unzipped to location public/` });
-      });
-    });
-    // res.json({ result: `Message with ID: ${dest} added.` });
   });
-
-async function unzip(url, dest) {
-  try {
-    console.log("decompression started");
-    const files = await decompress(url, dest);
-    console.log(files);
-  } catch (error) {
-    console.log(error);
-  }
 }
 
 ////////////////////////////the begging of the end///////////////////////////
@@ -358,4 +307,103 @@ function deploy(access_token, site_id, version_id) {
 
   req.end();
 }
+
+// Download latest archive from GitHub to temp folder
+const dest = "./css_tutorials.zip";
+const url =
+  "https://github.com/El-Nico/react_course/archive/refs/heads/main.zip";
+
+exports.download = functions
+  .runWith({
+    // Ensure the function has enough memory and time
+    // to process large files
+    timeoutSeconds: 300,
+    memory: "1GB",
+  })
+  .https.onRequest(async (req, res) => {
+    // Grab the text parameter.
+    // const original = req.query.text;
+
+    const dest = "./temp.zip";
+    const url =
+      "https://codeload.github.com/El-Nico/css_tutorials/legacy.zip/refs/heads/main";
+
+    download(url, dest, function () {
+      console.log(" zip download done");
+      unzip("temp.zip", "public").then(() => {
+        //perform file system operations, remove containing folder, get a list of all the names of the folders
+        res.json({ result: `files unzipped to location public/` });
+      });
+    });
+    // res.json({ result: `Message with ID: ${dest} added.` });
+  });
+
+async function unzip(url, dest) {
+  try {
+    console.log("decompression started");
+    const files = await decompress(url, dest);
+    console.log(files);
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+function downloadCourse(courseName, hostingFolder) {
+  return new Promise((resolve, reject) => {
+    const url =
+      MY_APP.GITHUB_DOWNLOAD_URL.START +
+      courseName +
+      MY_APP.GITHUB_DOWNLOAD_URL.END;
+    const dest = "./temp.zip";
+
+    console.log("inside main download course function");
+
+    download(url, dest)
+      .catch((error) => {
+        reject(error);
+      })
+      .then((temp_url) => {
+        console.log(temp_url);
+        console.log("zip download done");
+        console.log("decompression started");
+        // const regex = /.*\/public.*/gi; //this solution is too broad and doesn work when mixed
+        //with regular "./" hosting folders
+        return decompress(
+          dest,
+          "./"
+          // ,{
+          // filter: (file) => {
+          //   console.log(file.path);
+          //   // return path.extname(file.path) !== ".exe";
+          //   const matches = !!file.path.match(regex);
+          //   console.log(matches);
+          //   return matches;
+          // },
+          // }
+        );
+      })
+      .then((files) => {
+        const parentDir = files[0].path.split("/")[0];
+        //delete temp.zip
+        fs.rmSync(dest, { recursive: true, force: true });
+        console.log(parentDir, "done!");
+        //next steps is to process the folder
+      });
+  });
+}
+
+exports.generate_showcase = functions
+  .runWith({
+    // Ensure the function has enough memory and time
+    // to process large files
+    timeoutSeconds: 300,
+    memory: "1GB",
+  })
+  .https.onRequest(async (req, res) => {
+    const courseName = req.query.course_name;
+    const hostingFolder = req.query.hosting_folder || "";
+    console.log(courseName, hostingFolder);
+
+    downloadCourse(courseName, hostingFolder).then((data) => {});
+  });
 //////////////////////////end of the begging of the end/////////////////////
