@@ -1,0 +1,30 @@
+body {
+    font-size: 22px;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.5;
+    /* how to set background coloru */
+    background: #ffefd5;
+    /* color: darkblue; */
+    color: rgb(0, 0, 0);
+}
+
+
+/* rgba */
+
+p {
+    color: rgba(0, 0, 0, 0.5);
+}
+
+
+/* hexadecimal */
+
+p {
+    color: #333;
+}
+
+
+/* color palette */
+
+p {
+    /* color: rgba(243, 92, 150, 0.89); */
+}

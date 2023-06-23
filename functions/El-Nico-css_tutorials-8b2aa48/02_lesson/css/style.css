@@ -1,0 +1,33 @@
+/* universal selector */
+* {
+font-family: monospace;
+}
+
+/*element selector*/
+body {
+    font-size: 22px;
+}
+
+/* grouping selectors all h1 and h2 tags*/
+h1, h2{
+    color: blue;
+}
+
+p {
+    color: purple
+}
+/* nested selectors span inside p*/
+p span {
+    text-transform: uppercase;
+    background-color: gold;
+}
+
+/* class selector */
+.gray {
+    color: gray;
+}
+
+/* id selector */
+#second {
+    font-style: italic;
+}

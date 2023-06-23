@@ -1,5 +1,4 @@
 require("dotenv").config();
-console.log(process.env);
 const functions = require("firebase-functions");
 // The Firebase Admin SDK to access Firestore.
 // const admin = require("firebase-admin");
@@ -14,47 +13,46 @@ const { gzip, ungzip } = require("node-gzip");
 const { resolve } = require("path");
 
 // ///////////////utilities///////////////////////////////////
-// function getAccessToken() {
-//   var SCOPES = [
-//     "https://www.googleapis.com/auth/cloud-platform",
-//     "https://www.googleapis.com/auth/cloud-platform.read-only",
-//     "https://www.googleapis.com/auth/firebase",
-//     "https://www.googleapis.com/auth/firebase.readonly",
-//   ];
-//   return new Promise(function (resolve, reject) {
-//     var key = require("./tutorial-showcaser-firebase-adminsdk-1fdyi-f647ec7670.json");
-//     var jwtClient = new google.auth.JWT(
-//       key.client_email,
-//       null,
-//       key.private_key,
-//       SCOPES,
-//       null
-//     );
-//     jwtClient.authorize(function (err, tokens) {
-//       if (err) {
-//         reject(err);
-//         return;
-//       }
-//       resolve(tokens.access_token);
-//     });
-//   });
-// }
+exports.getAccessToken = function () {
+  var SCOPES = [
+    "https://www.googleapis.com/auth/cloud-platform",
+    "https://www.googleapis.com/auth/cloud-platform.read-only",
+    "https://www.googleapis.com/auth/firebase",
+    "https://www.googleapis.com/auth/firebase.readonly",
+  ];
+  return new Promise(function (resolve, reject) {
+    var key = require("./tutorial-showcaser-firebase-adminsdk-1fdyi-f647ec7670.json");
+    var jwtClient = new google.auth.JWT(
+      key.client_email,
+      null,
+      key.private_key,
+      SCOPES,
+      null
+    );
+    jwtClient.authorize(function (err, tokens) {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve(tokens.access_token);
+    });
+  });
+};
 
-// export async function createFileHashes(fileList) {
-//   const mappedFileList = await Promise.all(
-//     fileList.map((url) => {
-//       const fileBuffer = fs.readFileSync(url);
-//       const hashSum = crypto.createHash("sha256");
-//       return gzip(fileBuffer).then((compressed) => {
-//         hashSum.update(compressed);
-//         const hex = hashSum.digest("hex");
-//         return { url: url, hex: hex };
-//       });
-//     })
-//   );
-//   console.log(mappedFileList);
-//   return mappedFileList;
-// }
+exports.createFileHashes = async function (fileList) {
+  const mappedFileList = await Promise.all(
+    fileList.map((url) => {
+      const fileBuffer = fs.readFileSync(url);
+      const hashSum = crypto.createHash("sha256");
+      return gzip(fileBuffer).then((compressed) => {
+        hashSum.update(compressed);
+        const hex = hashSum.digest("hex");
+        return { url: url, hex: hex };
+      });
+    })
+  );
+  return Promise.resolve(mappedFileList);
+};
 ////////////////////////////end of utilities/////////////////////////
 
 /////////////////////////////channel API creation and CRUD///////////////
@@ -160,8 +158,8 @@ exports.createVersion = function (site_id, access_token) {
       });
       res.on("end", function () {
         const body = Buffer.concat(chunks);
-        console.log(body.toString());
-        resolve(body);
+        const version = JSON.parse(body.toString());
+        resolve(version);
       });
     });
     req.write(
@@ -202,8 +200,7 @@ exports.populateVersionFiles = function (
       });
       res.on("end", function () {
         const body = Buffer.concat(chunks);
-        console.log(body.toString());
-        resolve(body);
+        resolve(JSON.parse(body.toString()));
       });
     });
     req.write(

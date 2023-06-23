@@ -14,34 +14,12 @@ const { MY_APP } = require("./application_constants");
 const {
   createPreviewChannel,
   deletePreviewChannel,
+  getAccessToken,
+  createVersion,
+  createFileHashes,
+  populateVersionFiles,
 } = require("./hosting-api-crud");
-var path = require("path");
-
-function getAccessToken() {
-  var SCOPES = [
-    "https://www.googleapis.com/auth/cloud-platform",
-    "https://www.googleapis.com/auth/cloud-platform.read-only",
-    "https://www.googleapis.com/auth/firebase",
-    "https://www.googleapis.com/auth/firebase.readonly",
-  ];
-  return new Promise(function (resolve, reject) {
-    var key = require("./tutorial-showcaser-firebase-adminsdk-1fdyi-f647ec7670.json");
-    var jwtClient = new google.auth.JWT(
-      key.client_email,
-      null,
-      key.private_key,
-      SCOPES,
-      null
-    );
-    jwtClient.authorize(function (err, tokens) {
-      if (err) {
-        reject(err);
-        return;
-      }
-      resolve(tokens.access_token);
-    });
-  });
-}
+const path = require("path");
 
 function download(url, dest) {
   console.log("inside sub download function");
@@ -159,22 +137,6 @@ function makeRequest(site_id, access_token) {
     })
   );
   req.end();
-}
-
-async function createFileHashes(fileList) {
-  const mappedFileList = await Promise.all(
-    fileList.map((url) => {
-      const fileBuffer = fs.readFileSync(url);
-      const hashSum = crypto.createHash("sha256");
-      return gzip(fileBuffer).then((compressed) => {
-        hashSum.update(compressed);
-        const hex = hashSum.digest("hex");
-        return { url: url, hex: hex };
-      });
-    })
-  );
-  console.log(mappedFileList);
-  return mappedFileList;
 }
 
 function uploadHashesRequest(fileList, site_id, version_id, access_token) {
@@ -388,7 +350,66 @@ function downloadCourse(courseName, hostingFolder) {
         fs.rmSync(dest, { recursive: true, force: true });
         console.log(parentDir, "done!");
         //next steps is to process the folder
+
+        resolve(parentDir);
       });
+  });
+}
+
+function deleteAllExceptFolder(src, folder) {
+  return new Promise((resolve, reject) => {
+    fs.readdirSync(src).forEach((file) => {
+      const Absolute = path.join(src, file);
+      if (file !== folder) {
+        fs.rmSync(Absolute, { recursive: true, force: true });
+      }
+    });
+    resolve("done");
+  });
+}
+
+function buildFiles(courseDir, hos) {
+  return new Promise((resolve, reject) => {
+    //DELETE README HERE FOR NOW
+    fs.rmSync(courseDir + "/" + "README.md", { recursive: true, force: true });
+    const files = fs.readdirSync(courseDir);
+    // console.log(files);
+    let cFiles = {};
+    // let cFilesTemp = [];
+    files.forEach((dir) => {
+      //first  layer
+      // console.log("FILE 11111111111");
+      readDir = courseDir + "/" + dir;
+      const subFiles = fs.readdirSync(readDir);
+      const cFilesTemp = [];
+      let publicFolder = readDir;
+      //also conditionally check for and deal with readme here
+      if (subFiles.includes(hos)) {
+        /// delete all others async
+        /// index public async
+        publicFolder = readDir + "/" + hos;
+        //do this async?
+        deleteAllExceptFolder(readDir, hos);
+      }
+      for (const filePath of walkSync(publicFolder)) {
+        cFilesTemp.push(filePath.replace(/\\/g, "/"));
+      }
+      // console.log("this is the current cfiles for lesson " + dir, cFilesTemp);
+      cFiles[dir] = cFilesTemp;
+    });
+    resolve(cFiles);
+
+    function* walkSync(directory) {
+      const files = fs.readdirSync(directory, { withFileTypes: true });
+      for (const file of files) {
+        if (file.isDirectory()) {
+          yield* walkSync(path.join(directory, file.name));
+        } else {
+          // console.log(path.normalize(path.join(directory, file.name)));
+          yield path.join(directory, file.name);
+        }
+      }
+    }
   });
 }
 
@@ -404,6 +425,121 @@ exports.generate_showcase = functions
     const hostingFolder = req.query.hosting_folder || "";
     console.log(courseName, hostingFolder);
 
-    downloadCourse(courseName, hostingFolder).then((data) => {});
+    // MAIN TRACK
+    // downloadCourse(courseName, hostingFolder)
+    //   .then((courseDir) => {
+    //     return buildFiles(courseDir, hostingFolder);
+    //   })
+    //   .then((fileTreeObj) => {
+    //     // //STEPS
+    //     // //get access token
+    //     // getAccessToken().then((token) => {});
+    //     // //create preview channel with obj key name
+    //     // // create new version for the site
+    //     // //hashify all files for upload
+    //     // //upload hashes to populate files endpoint
+    //     // //upload files individually in a loop
+    //     // //finalize version
+    //     // //create release
+    //   });
+
+    //SIDE TRACK
+    //./react_course-main
+    //./El-Nico-css_tutorials-8b2aa48
+    //buildFiles("react_course-main", "public");
+
+    const testTreeObj = {
+      "01_basic_app": [
+        "react_course-main/01_basic_app/index.css",
+        "react_course-main/01_basic_app/index.html",
+        "react_course-main/01_basic_app/index.js",
+      ],
+      "02_props_joke_and_punchline_app": [
+        "react_course-main/02_props_joke_and_punchline_app/public/favicon.ico",
+        "react_course-main/02_props_joke_and_punchline_app/public/index.html",
+        "react_course-main/02_props_joke_and_punchline_app/public/logo192.png",
+        "react_course-main/02_props_joke_and_punchline_app/public/logo512.png",
+        "react_course-main/02_props_joke_and_punchline_app/public/manifest.json",
+        "react_course-main/02_props_joke_and_punchline_app/public/robots.txt",
+      ],
+    };
+    ////////////////////////////////BIG LOOP//////////////////////////////////
+
+    //upload files individually in a loop
+    //finalize version
+    //create release
+    getAccessToken().then((token) => {
+      // //STEPS
+      // //create preview channel with obj key name
+      let operationDetails = {
+        specimen: Object.keys(testTreeObj)[1],
+      };
+
+      createPreviewChannel(MY_APP.SITE_ID, token, operationDetails.specimen)
+        // // create new version for the site
+        .then((res) => {
+          console.log("from create prev channel", res);
+          return createVersion(MY_APP.SITE_ID, token);
+        })
+        //hashify all files for upload
+        .then((version) => {
+          //need to get version id here
+          console.log("actualversion", version);
+          operationDetails.version_id = version.name.split("/")[3];
+          return createFileHashes(testTreeObj[specimen]);
+        })
+        //upload hashes to populate files endpoint
+        //i think here is where i need to manipulate the urls
+        .then((mappedFileList) => {
+          // [
+          //   >    {
+          //   >      url: 'react_course-main/02_props_joke_and_punchline_app/public/favicon.ico',
+          //   >      hex: 'fe3fb4458b9cfdb3af864e67e9a0cdc587831e5daac83855ec8b187b4630eebc'
+          //   >    },
+          //   >    {
+          //   >      url: 'react_course-main/02_props_joke_and_punchline_app/public/index.html',
+          //   >      hex: '3f2e48222a33b20849dd9b017fa8d61320e7b8058faae504599055c2fe125245'
+          //   >    },
+          //   >    {
+          //   >      url: 'react_course-main/02_props_joke_and_punchline_app/public/logo192.png',
+          //   >      hex: '5fd95fd00fb46493789c1f06e23ac75ab61b2bf440716cdfa680de8563bf2a1b'
+          //   >    },
+          //   >    {
+          //   >      url: 'react_course-main/02_props_joke_and_punchline_app/public/logo512.png',
+          //   >      hex: 'b1061a98910ec3c90bd932d605450aa7c54c36c3d466f3c6b2d2867c1a94c8d9'
+          //   >    },
+          //   >    {
+          //   >      url: 'react_course-main/02_props_joke_and_punchline_app/public/manifest.json',
+          //   >      hex: '33cf44b34944c671e8087c02c45134ac371bc0ec83e349dc325c2aa6a01cfaf8'
+          //   >    },
+          //   >    {
+          //   >      url: 'react_course-main/02_props_joke_and_punchline_app/public/robots.txt',
+          //   >      hex: 'ac8b715ea1c1cbc4a803b9b9609fb3305a61181bb9e8fd7916dcdf45de698292'
+          //   >    }
+          //   >  ]
+          // "files": {
+          //   "/file1": "66d61f86bb684d0e35f94461c1f9cf4f07a4bb3407bfbd80e518bd44368ff8f4",
+          //   "/file2": "490423ebae5dcd6c2df695aea79f1f80555c62e535a2808c8115a6714863d083",
+          //   "/file3": "59cae17473d7dd339fe714f4c6c514ab4470757a4fe616dfdb4d81400addf315"
+          // }
+          console.log(mappedFileList);
+          const populatFileList = mappedFileList.map((file) => {});
+          populateVersionFiles(
+            mappedFileList,
+            MY_APP.SITE_ID,
+            operationDetails.version_id,
+            token
+          );
+        });
+    });
+    ////////////////////////////////////////////////////////////////////
+
+    ////////////////////////////////////////////////////////////////////
+    // createFileHashes(testTreeObj["02_props_joke_and_punchline_app"]).then(
+    //   (mappedFileList) => {
+    //     console.log(mappedFileList);
+    //   }
+    // );
+    /////////////////////////////////////////////////////////////////////
   });
 //////////////////////////end of the begging of the end/////////////////////

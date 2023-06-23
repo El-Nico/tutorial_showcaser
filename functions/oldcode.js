@@ -155,3 +155,35 @@ return (
 //   const zipFolderUrl = dest + "/" + zipFolder;
 //   resolve(zipFolderUrl);
 // });
+
+// {
+//   lesson1:[incexjs,html,css]
+//   lesson2:[public/indexjs,html,css]
+// }
+
+// open each lesson
+// scan through it from top to bottom
+// when you find public folder
+
+// SWITCH CONTEXT
+// delete everything from current flat array
+
+// the index all files process is a trailing process following
+// the intellisense of finding out publlic or readme etc
+
+// trailing process
+
+// first layer
+// no operations,just get list of lessons
+// start loop for
+// second layer
+// operation 1 check for public folder
+// 	if found delete everything else but public folder async
+// 		index all files in public folder
+// 	if not found index all files in folder
+// on complete post index files in format lesson2:[public/html,index.js etc]
+
+//   const diri=fs.opendirSync(readDir)
+//   for await (const entry of diri) {
+//     console.log("Found file:", entry.name);
+// }

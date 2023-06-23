@@ -1,0 +1,57 @@
+/* css reset overrides the box model padding and margin defaults */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    /* means the body element is always at least the height of the full
+    page regardles of small content */
+    min-height: 100vh;
+}
+
+p {
+    font-size: 32px;
+}
+
+header {
+    /* width relative to parent */
+    width: 50%;
+}
+
+h1 {
+    border: 2px dashed red;
+    /* width even half of header with so 25% */
+    width: 50%;
+    font-size: 3rem;
+    padding: 0.5em;
+}
+
+
+/* rem root element root size set by the browser usually 16px 
+always relative to root, not parent element*/
+
+main {
+    font-size: 2rem;
+    /*32px*/
+    background-color: skyblue;
+    /* slight problem creates horizontal scrollbars because
+    does not account for scrollbar on the right   */
+    width: 50vw;
+    /*probably better than viewport because does not create 
+    horizontal scrollbarrrrrrrrr  */
+    width: 50%;
+}
+
+
+/* em related to the parent element*/
+
+p {
+    font-size: 2em;
+    /*64px*/
+    /* ch how many characters per line, where character equates to 
+    about the width of glyph "0" used to define column width in magazines  */
+    width: 40ch;
+}
