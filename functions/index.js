@@ -18,6 +18,10 @@ const {
   createVersion,
   createFileHashes,
   populateVersionFiles,
+  uploadVersionFile,
+  finalizeVersion,
+  create_deployRelease,
+  deleteVersion,
 } = require("./hosting-api-crud");
 const path = require("path");
 
@@ -384,6 +388,7 @@ function buildFiles(courseDir, hos) {
       const cFilesTemp = [];
       let publicFolder = readDir;
       //also conditionally check for and deal with readme here
+      ///////////////////////////////////////////////
       if (subFiles.includes(hos)) {
         /// delete all others async
         /// index public async
@@ -462,6 +467,11 @@ exports.generate_showcase = functions
         "react_course-main/02_props_joke_and_punchline_app/public/manifest.json",
         "react_course-main/02_props_joke_and_punchline_app/public/robots.txt",
       ],
+      "01_basic_composable": [
+        "react_course-main/01_basic_composable/index.css",
+        "react_course-main/01_basic_composable/index.html",
+        "react_course-main/01_basic_composable/index.js",
+      ],
     };
     ////////////////////////////////BIG LOOP//////////////////////////////////
 
@@ -477,69 +487,161 @@ exports.generate_showcase = functions
 
       createPreviewChannel(MY_APP.SITE_ID, token, operationDetails.specimen)
         // // create new version for the site
-        .then((res) => {
-          console.log("from create prev channel", res);
+        .then((channel) => {
+          console.log("from create prev channel", channel);
+          operationDetails.channel_id = channel.name
+            ? channel.name.split("/")[3]
+            : operationDetails.specimen;
           return createVersion(MY_APP.SITE_ID, token);
         })
         //hashify all files for upload
         .then((version) => {
           //need to get version id here
           console.log("actualversion", version);
-          operationDetails.version_id = version.name.split("/")[3];
-          return createFileHashes(testTreeObj[specimen]);
+          operationDetails.version_id = version.name.split("/")[3].trim();
+          console.log("this is the actual vid", operationDetails.version_id);
+          return createFileHashes(testTreeObj[operationDetails.specimen]);
         })
         //upload hashes to populate files endpoint
         //i think here is where i need to manipulate the urls
         .then((mappedFileList) => {
-          // [
-          //   >    {
-          //   >      url: 'react_course-main/02_props_joke_and_punchline_app/public/favicon.ico',
-          //   >      hex: 'fe3fb4458b9cfdb3af864e67e9a0cdc587831e5daac83855ec8b187b4630eebc'
-          //   >    },
-          //   >    {
-          //   >      url: 'react_course-main/02_props_joke_and_punchline_app/public/index.html',
-          //   >      hex: '3f2e48222a33b20849dd9b017fa8d61320e7b8058faae504599055c2fe125245'
-          //   >    },
-          //   >    {
-          //   >      url: 'react_course-main/02_props_joke_and_punchline_app/public/logo192.png',
-          //   >      hex: '5fd95fd00fb46493789c1f06e23ac75ab61b2bf440716cdfa680de8563bf2a1b'
-          //   >    },
-          //   >    {
-          //   >      url: 'react_course-main/02_props_joke_and_punchline_app/public/logo512.png',
-          //   >      hex: 'b1061a98910ec3c90bd932d605450aa7c54c36c3d466f3c6b2d2867c1a94c8d9'
-          //   >    },
-          //   >    {
-          //   >      url: 'react_course-main/02_props_joke_and_punchline_app/public/manifest.json',
-          //   >      hex: '33cf44b34944c671e8087c02c45134ac371bc0ec83e349dc325c2aa6a01cfaf8'
-          //   >    },
-          //   >    {
-          //   >      url: 'react_course-main/02_props_joke_and_punchline_app/public/robots.txt',
-          //   >      hex: 'ac8b715ea1c1cbc4a803b9b9609fb3305a61181bb9e8fd7916dcdf45de698292'
-          //   >    }
-          //   >  ]
-          // "files": {
-          //   "/file1": "66d61f86bb684d0e35f94461c1f9cf4f07a4bb3407bfbd80e518bd44368ff8f4",
-          //   "/file2": "490423ebae5dcd6c2df695aea79f1f80555c62e535a2808c8115a6714863d083",
-          //   "/file3": "59cae17473d7dd339fe714f4c6c514ab4470757a4fe616dfdb4d81400addf315"
-          // }
           console.log(mappedFileList);
-          const populatFileList = mappedFileList.map((file) => {});
-          populateVersionFiles(
-            mappedFileList,
+          operationDetails.mappedFileList = mappedFileList;
+          const populatFileList = mappedFileList.reduce(
+            (filesObject, mappedFile) => {
+              console.log(mappedFile);
+              //take away first 2 parts of url including coursname and folder name
+              let splitPoint = 2;
+              if (mappedFile.url.split("/").includes("public")) {
+                splitPoint = 3;
+              }
+              const urlComps =
+                "/" + mappedFile.url.split("/").slice(splitPoint).join("/");
+              const mahex = mappedFile.hex;
+              let newObj = {};
+              newObj[urlComps] = mahex;
+              const initialFiles = filesObject.files;
+              return { files: { ...initialFiles, ...newObj } };
+            },
+            { files: {} }
+          );
+          console.log("redyced files", populatFileList);
+          const finalObj = JSON.stringify(populatFileList);
+          console.log(finalObj);
+          return populateVersionFiles(
+            finalObj,
             MY_APP.SITE_ID,
             operationDetails.version_id,
             token
           );
+        })
+        .then((res) => {
+          console.log(res);
+          const promises = [];
+
+          const curarr = operationDetails.mappedFileList;
+          for (let i = 0; i < curarr.length; i++) {
+            console.log(curarr[i]);
+            promises.push(
+              uploadVersionFile(
+                curarr[i].buffer,
+                curarr[i].hex,
+                MY_APP.SITE_ID,
+                operationDetails.version_id,
+                token
+              )
+            );
+            console.log(promises);
+          }
+
+          // operationDetails.mappedFileList.map((file) => {
+          //   return uploadVersionFile(
+          //     file.buffer,
+          //     file.hex,
+          //     MY_APP.SITE_ID,
+          //     operationDetails.version_id,
+          //     token
+          //   );
+          // });
+
+          console.log(promises);
+
+          return Promise.all(promises);
+        })
+        .then((allPromises) => {
+          console.log(allPromises);
+          ///finalize fverison
+          console.log(operationDetails.version_id);
+          //const mava = operationDetails.version_id;
+          console.log(operationDetails.channel_id);
+          return finalizeVersion(
+            token,
+            MY_APP.SITE_ID,
+            operationDetails.version_id
+          );
+        })
+        .then((finalizedVersion) => {
+          console.log(finalizedVersion);
+          return create_deployRelease(
+            token,
+            MY_APP.SITE_ID,
+            operationDetails.version_id,
+            operationDetails.channel_id
+          );
+        })
+        .then((deployedRelease) => {
+          console.log(deployedRelease);
+          ///////////////////////////
+          //these are precisely where you will do the next steps,
+          //where you will make sure all the necessary details have been tagged onto the
+          //operation details object
+          //and then begin the process of uploading it to firebase
+          //you can do a mock {} of the operation details object
+          //or just do pseudocode tomorrow
+          //newer version https://firebase.google.com/docs/functions/schedule-functions?gen=2nd
+          //this the one yohttps://www.freecodecamp.org/news/how-to-schedule-a-task-with-firebase-cloud-functions/
+
+          //////////////////////////////
+          //delete stray files
+          // like the react and github folders
+
+          //////////////////////next steps 2
+          //setup a function that is timebased and triggers on channel expiry
+          //deletes all records from firebase
+          //deletes all preview channels and versions
+          //reconstructs the showcase
+          //starts listening in the future again
+
+          ///////next steps 3
+          //go back to frontend, read all urls from firebase and display
+
+          //PROVISIONAL END OF APP
+
+          //BEGIN FINETUNIGN FASE
+          //FINAL END OF APP
         });
     });
-    ////////////////////////////////////////////////////////////////////
+    //////////////////////////END OF BIG LOOP//////////////////////////////////////////
 
-    ////////////////////////////////////////////////////////////////////
-    // createFileHashes(testTreeObj["02_props_joke_and_punchline_app"]).then(
-    //   (mappedFileList) => {
-    //     console.log(mappedFileList);
-    //   }
-    // );
-    /////////////////////////////////////////////////////////////////////
+    ////////////////////////////ATTEMPT TO DELETE CHANNEL AND VERSION////////////////////////////////////////
+    // let tokena = "";
+    // getAccessToken()
+    //   .then((token) => {
+    //     tokena = token;
+    //     return deletePreviewChannel(
+    //       MY_APP.SITE_ID,
+    //       token,
+    //       "02_props_joke_and_punchline_app"
+    //     );
+    //   })
+    //   .then((allPromises) => {
+    //     console.log(allPromises);
+    //     return deleteVersion(MY_APP.SITE_ID, tokena, "c449b362bef9bdbd");
+    //   })
+    //   .then((delver) => {
+    //     console.log(delver);
+    //   });
+
+    ////////////////////////////////////END OF ATTEMPT TO DEL CHAN AND VERSION/////////////////////////////////
   });
 //////////////////////////end of the begging of the end/////////////////////

@@ -47,7 +47,7 @@ exports.createFileHashes = async function (fileList) {
       return gzip(fileBuffer).then((compressed) => {
         hashSum.update(compressed);
         const hex = hashSum.digest("hex");
-        return { url: url, hex: hex };
+        return { buffer: compressed, url: url, hex: hex };
       });
     })
   );
@@ -81,8 +81,7 @@ exports.createPreviewChannel = function (site_id, access_token, channelId) {
       res.on("end", function () {
         const body = Buffer.concat(chunks);
         const bodyString = body.toString();
-        console.log(bodyString);
-        resolve(bodyString);
+        resolve(JSON.parse(bodyString));
       });
     });
 
@@ -124,7 +123,7 @@ exports.deletePreviewChannel = function (site_id, access_token, channelId) {
       res.on("end", function () {
         const body = Buffer.concat(chunks);
         const bodyString = body.toString();
-        console.log(bodyString);
+        console.log("del pre cha", bodyString);
         resolve(bodyString);
       });
     });
@@ -158,6 +157,7 @@ exports.createVersion = function (site_id, access_token) {
       });
       res.on("end", function () {
         const body = Buffer.concat(chunks);
+        console.log(body.toString());
         const version = JSON.parse(body.toString());
         resolve(version);
       });
@@ -203,11 +203,7 @@ exports.populateVersionFiles = function (
         resolve(JSON.parse(body.toString()));
       });
     });
-    req.write(
-      JSON.stringify({
-        files: files,
-      })
-    );
+    req.write(files);
     req.end();
   });
 };
@@ -242,7 +238,8 @@ exports.uploadVersionFile = function (
       res.on("end", function () {
         const body = Buffer.concat(chunks);
         console.log(body.toString());
-        resolve(body);
+        console.log("the function has apperently ended");
+        resolve(body.toString());
       });
     });
 
@@ -274,8 +271,7 @@ exports.finalizeVersion = function (access_token, site_id, version_id) {
 
       res.on("end", function () {
         const body = Buffer.concat(chunks);
-        console.log(body.toString());
-        resolve(body);
+        resolve(body.toString());
       });
     });
 
@@ -342,7 +338,7 @@ exports.deleteVersion = function (site_id, access_token, version_id) {
       res.on("end", function () {
         const body = Buffer.concat(chunks);
         const bodyString = body.toString();
-        console.log(bodyString);
+        console.log("del ver", bodyString);
         resolve(body);
       });
     });
