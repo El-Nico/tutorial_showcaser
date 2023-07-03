@@ -187,3 +187,39 @@ return (
 //   for await (const entry of diri) {
 //     console.log("Found file:", entry.name);
 // }
+
+// const testTreeObj = {
+//   "01_basic_app": [
+//     "react_course-main/01_basic_app/index.css",
+//     "react_course-main/01_basic_app/index.html",
+//     "react_course-main/01_basic_app/index.js",
+//   ],
+//   "02_props_joke_and_punchline_app": [
+//     "react_course-main/02_props_joke_and_punchline_app/public/favicon.ico",
+//     "react_course-main/02_props_joke_and_punchline_app/public/index.html",
+//     "react_course-main/02_props_joke_and_punchline_app/public/logo192.png",
+//     "react_course-main/02_props_joke_and_punchline_app/public/logo512.png",
+//     "react_course-main/02_props_joke_and_punchline_app/public/manifest.json",
+//     "react_course-main/02_props_joke_and_punchline_app/public/robots.txt",
+//   ],
+//   "01_basic_composable": [
+//     "react_course-main/01_basic_composable/index.css",
+//     "react_course-main/01_basic_composable/index.html",
+//     "react_course-main/01_basic_composable/index.js",
+//   ],
+// };
+
+// const curarr = operationDetails.mappedFileList;
+//               for (let i = 0; i < curarr.length; i++) {
+//                 console.log(curarr[i]);
+//                 promises.push(
+//                   uploadVersionFile(
+//                     curarr[i].buffer,
+//                     curarr[i].hex,
+//                     MY_APP.SITE_ID,
+//                     operationDetails.version_id,
+//                     token
+//                   )
+//                 );
+//                 console.log(promises);
+//               }

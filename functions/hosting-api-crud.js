@@ -1,16 +1,11 @@
 require("dotenv").config();
 const functions = require("firebase-functions");
-// The Firebase Admin SDK to access Firestore.
-// const admin = require("firebase-admin");
-// admin.initializeApp();
 
 const fs = require("fs");
 const https = require("https");
-const decompress = require("decompress");
 const { google } = require("googleapis");
 const crypto = require("crypto");
-const { gzip, ungzip } = require("node-gzip");
-const { resolve } = require("path");
+const { gzip } = require("node-gzip");
 
 // ///////////////utilities///////////////////////////////////
 exports.getAccessToken = function () {
@@ -348,140 +343,3 @@ exports.deleteVersion = function (site_id, access_token, version_id) {
 };
 
 ////////////////////////////end of version/deploy API and CRUD///////////////////////////
-
-// function uploadHashesRequest(fileList, site_id, version_id, access_token) {
-//   //specify files for version
-//   const options = {
-//     method: "POST",
-//     hostname: "firebasehosting.googleapis.com",
-//     port: null,
-//     path: `/v1beta1/sites/${site_id}/versions/${version_id}:populateFiles`,
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${access_token}`,
-//     },
-//   };
-
-//   const req = https.request(options, function (res) {
-//     const chunks = [];
-
-//     res.on("data", function (chunk) {
-//       chunks.push(chunk);
-//     });
-
-//     res.on("end", function () {
-//       const body = Buffer.concat(chunks);
-//       console.log(body.toString());
-//     });
-//   });
-
-//   let files = {};
-//   fileList.forEach((f) => {
-//     files[f.url.substring(1)] = f.hex;
-//   });
-//   console.log(files);
-//   req.write(
-//     JSON.stringify({
-//       files: files,
-//     })
-//   );
-//   req.end();
-// }
-
-// // must be done individually
-// async function uploadFiles(
-//   //upload specifid files for version serially
-//   fileUrl,
-//   file_hash,
-//   site_id,
-//   version_id,
-//   access_token
-// ) {
-//   const options = {
-//     method: "POST",
-//     hostname: "upload-firebasehosting.googleapis.com",
-//     port: null,
-//     path: `/upload/sites/${site_id}/versions/${version_id}/files/${file_hash}`,
-//     headers: {
-//       Authorization: `Bearer ${access_token}`,
-//       "Content-Type": "application/octet-stream",
-//     },
-//   };
-
-//   const req = https.request(options, function (res) {
-//     const chunks = [];
-
-//     res.on("data", function (chunk) {
-//       chunks.push(chunk);
-//     });
-
-//     res.on("end", function () {
-//       const body = Buffer.concat(chunks);
-//       console.log(body.toString());
-//       console.log("the function has apperently ended");
-//     });
-//   });
-
-//   req.write(fileUrl);
-//   req.end();
-// }
-
-// function patchVersion(access_token, site_id, version_id) {
-//   //confirm that the version is finalized
-//   //uhm this is actually the create release api ive already don ite
-//   const options = {
-//     method: "PATCH",
-//     hostname: "firebasehosting.googleapis.com",
-//     port: null,
-//     path: `/v1beta1/sites/${site_id}/versions/${version_id}?update_mask=status`,
-//     headers: {
-//       "Content-Type": "application/json",
-//       Authorization: `Bearer ${access_token}`,
-//     },
-//   };
-
-//   const req = https.request(options, function (res) {
-//     const chunks = [];
-
-//     res.on("data", function (chunk) {
-//       chunks.push(chunk);
-//     });
-
-//     res.on("end", function () {
-//       const body = Buffer.concat(chunks);
-//       console.log(body.toString());
-//     });
-//   });
-
-//   req.write(JSON.stringify({ status: "FINALIZED" }));
-//   req.end();
-// }
-
-// function deploy(access_token, site_id, version_id) {
-//   //deploy finalized files
-//   const options = {
-//     method: "POST",
-//     hostname: "firebasehosting.googleapis.com",
-//     port: null,
-//     path: `/v1beta1/sites/${site_id}/releases?versionName=sites/${site_id}/versions/${version_id}`,
-//     headers: {
-//       Authorization: `Bearer ${access_token}`,
-//     },
-//   };
-
-//   const req = https.request(options, function (res) {
-//     const chunks = [];
-
-//     res.on("data", function (chunk) {
-//       chunks.push(chunk);
-//     });
-
-//     res.on("end", function () {
-//       const body = Buffer.concat(chunks);
-//       console.log(body.toString());
-//     });
-//   });
-
-//   req.end();
-// }
-// //////////////////////////end of the begging of the end/////////////////////
