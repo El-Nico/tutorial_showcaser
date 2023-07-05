@@ -159,8 +159,10 @@ exports.generate_showcase = functions
         return buildFiles(courseDir, hostingFolder);
       })
       .then((lessonTree) => {
+        const lessonArr= Object.entries(lessonTree)
+        const lastIndex= lessonArr.length-1
         getAccessToken().then((token) => {
-          for (const [lessonName, lessonFiles] of Object.entries(lessonTree)) {
+          for (const [lessonName, lessonFiles] of lessonArr) {
             let operationDetails = {
               lessonName: lessonName,
             };
@@ -173,6 +175,7 @@ exports.generate_showcase = functions
               .then((channel) => {
                 console.log("from create prev channel", channel);
                 operationDetails.channel_id = channel.name.split("/")[3];
+                operationDetails.channel_url=channel.url
                 //create version for this release
                 return createVersion(MY_APP.SITE_ID, token);
               })
@@ -254,11 +257,18 @@ exports.generate_showcase = functions
                 );
               })
               .then((deployedRelease) => {
-                ///chanelid,versionid,lessonname,,,urlHexBufferTree
+                ///chanelid,versionid,lessonname,url,,,urlHexBufferTree
                 delete operationDetails.urlHexBufferTree;
                 console.log(deployedRelease);
                 console.log(operationDetails);
                 firestore.collection(courseName).add(operationDetails);
+
+                if(lessonName===lessonArr[lastIndex][0]){
+                  console.log("apparently we at the last index hope there ar no problems with enoent the last files hmm")
+                  //delete the github folder
+          fs.rmSync(coursefolderName, { recursive: true, force: true });
+                }
+                
                 //OHMYGOD IT WORKED
                 /////////////////////////
                 //these are precisely where you will do the next steps,
@@ -286,8 +296,6 @@ exports.generate_showcase = functions
                 //FINAL END OF APP
               });
           }
-          //delete the github folder
-          fs.rmSync(coursefolderName, { recursive: true, force: true });
         });
       });
 
@@ -295,6 +303,7 @@ exports.generate_showcase = functions
   });
 //make a delete preview channel here that takes in channel nae as query
 exports.delete_one_showcase = functions.https.onRequest((req, res) => {
+  //http://localhost:5001/tutorial-showcaser/us-central1/delete_one_showcase?channel_name=07_styling_links
   channelName = req.query.channel_name;
   let tokena = "";
   getAccessToken()
@@ -311,17 +320,48 @@ exports.delete_one_showcase = functions.https.onRequest((req, res) => {
 //read a list from firebase using coursename
 //for each document, delete each version, channel, release etc
 //finally delete document
-exports.delete_showcase = functions.https.onRequest((req, res) => {
-  channelName = req.query.channel_name;
+exports.delete_showcase = functions.https.onRequest(async (req, res) => {
+  // http://localhost:5001/tutorial-showcaser/us-central1/delete_showcase?course_name=css_tutorials
+  courseName = req.query.course_name;
   let tokena = "";
-  getAccessToken()
+  const lessons= await (await firestore.collection(courseName).get()).docs.map(doc=>doc.data());
+  await getAccessToken()
     .then((token) => {
-      tokena = token;
-      return deletePreviewChannel(MY_APP.SITE_ID, token, channelName);
+      const deleteAllPromiseArr=lessons.reduce((delPromiseArr, currLesson)=>{
+        
+        //delete release//NOT CREATED//apparently releases
+        //cant be deleted should look into that option on 
+        //firbase console of limiting number of releases to keep
+        //delete version
+        //delete channel
+        delPromiseArr.push(
+          deleteVersion(MY_APP
+            .SITE_ID,token,currLesson.version_id)
+        ), deletePreviewChannel(MY_APP.SITE_ID,token,currLesson.channel_id)
+        return delPromiseArr
+      },[])
+      console.log(deleteAllPromiseArr)      
+      return Promise.all(deleteAllPromiseArr)
     })
     .then((allPromises) => {
       console.log(allPromises);
+      //delete all documents from firebase
+        const ref = firestore.collection(courseName)
+  ref.onSnapshot((snapshot) => {
+    snapshot.docs.forEach((doc) => {
+      ref.doc(doc.id).delete()
+    })
+  })
+
       // return deleteVersion(MY_APP.SITE_ID, tokena, "c449b362bef9bdbd");
     });
+    console.log("i waited for the juge promise array to complete")
 });
+
+
+///list and delete all channels method
+///think of a permanent solution for the rmsync problem
+
+
+////next phase crontab
 //////////////////////////end of the begging of the end/////////////////////

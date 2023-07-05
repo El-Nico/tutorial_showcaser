@@ -1,1 +1,0 @@
-ReactDOM.render(<p>ur mom gay</p>, document.getElementById("root"))
