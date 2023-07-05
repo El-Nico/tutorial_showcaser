@@ -286,35 +286,42 @@ exports.generate_showcase = functions
                 //FINAL END OF APP
               });
           }
+          //delete the github folder
+          fs.rmSync(coursefolderName, { recursive: true, force: true });
         });
-        //delete the github folder
-        // fs.rmdir(coursefolderName, { recursive: true }, () => {
-        //   console.log("Successfully deleted courseFolder!");
-        // });
       });
 
     //////////////////////////END OF BIG LOOP//////////////////////////////////////////
-
-    ////////////////////////////ATTEMPT TO DELETE CHANNEL AND VERSION////////////////////////////////////////
-    // let tokena = "";
-    // getAccessToken()
-    //   .then((token) => {
-    //     tokena = token;
-    //     return deletePreviewChannel(
-    //       MY_APP.SITE_ID,
-    //       token,
-    //       "02_props_joke_and_punchline_app"
-    //     );
-    //   })
-    //   .then((allPromises) => {
-    //     console.log(allPromises);
-    //     return deleteVersion(MY_APP.SITE_ID, tokena, "c449b362bef9bdbd");
-    //   })
-    //   .then((delver) => {
-    //     console.log(delver);
-    //   });
-
-    ////////////////////////////////////END OF ATTEMPT TO DEL CHAN AND VERSION/////////////////////////////////
   });
 //make a delete preview channel here that takes in channel nae as query
+exports.delete_one_showcase = functions.https.onRequest((req, res) => {
+  channelName = req.query.channel_name;
+  let tokena = "";
+  getAccessToken()
+    .then((token) => {
+      tokena = token;
+      return deletePreviewChannel(MY_APP.SITE_ID, token, channelName);
+    })
+    .then((allPromises) => {
+      console.log(allPromises);
+      // return deleteVersion(MY_APP.SITE_ID, tokena, "c449b362bef9bdbd");
+    });
+});
+
+//read a list from firebase using coursename
+//for each document, delete each version, channel, release etc
+//finally delete document
+exports.delete_showcase = functions.https.onRequest((req, res) => {
+  channelName = req.query.channel_name;
+  let tokena = "";
+  getAccessToken()
+    .then((token) => {
+      tokena = token;
+      return deletePreviewChannel(MY_APP.SITE_ID, token, channelName);
+    })
+    .then((allPromises) => {
+      console.log(allPromises);
+      // return deleteVersion(MY_APP.SITE_ID, tokena, "c449b362bef9bdbd");
+    });
+});
 //////////////////////////end of the begging of the end/////////////////////

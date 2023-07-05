@@ -303,7 +303,7 @@ exports.create_deployRelease = function (
       res.on("end", function () {
         const body = Buffer.concat(chunks);
         console.log(body.toString());
-        resolve(body);
+        resolve(body.toString());
       });
     });
 
@@ -334,7 +334,7 @@ exports.deleteVersion = function (site_id, access_token, version_id) {
         const body = Buffer.concat(chunks);
         const bodyString = body.toString();
         console.log("del ver", bodyString);
-        resolve(body);
+        resolve(bodyString);
       });
     });
 
