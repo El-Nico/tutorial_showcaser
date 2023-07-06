@@ -93,6 +93,39 @@ exports.createPreviewChannel = function (site_id, access_token, channelId) {
   });
 };
 
+//list preview channels
+exports.listPreviewChannels = function (site_id, access_token) {
+  return new Promise((resolve, reject) => {
+    //request options
+    const options = {
+      method: "GET",
+      hostname: "firebasehosting.googleapis.com",
+      port: null,
+      path: `/v1beta1/sites/${site_id}/channels?pageSize=100`,
+      headers: {
+        Authorization: `Bearer ${access_token}`,
+      },
+    };
+
+    const req = https.request(options, function (res) {
+      const chunks = [];
+
+      res.on("data", function (chunk) {
+        chunks.push(chunk);
+      });
+
+      res.on("end", function () {
+        const body = Buffer.concat(chunks);
+        const bodyString = body.toString();
+        console.log("from channel list", bodyString);
+        resolve(JSON.parse(bodyString));
+      });
+    });
+
+    req.end();
+  });
+};
+
 //delete preview channel
 //should return?
 exports.deletePreviewChannel = function (site_id, access_token, channelId) {

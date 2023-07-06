@@ -19,6 +19,7 @@ const {
   finalizeVersion,
   create_deployRelease,
   deleteVersion,
+  listPreviewChannels,
 } = require("./hosting-api-crud");
 const path = require("path");
 const firestore = admin.firestore();
@@ -159,8 +160,8 @@ exports.generate_showcase = functions
         return buildFiles(courseDir, hostingFolder);
       })
       .then((lessonTree) => {
-        const lessonArr= Object.entries(lessonTree)
-        const lastIndex= lessonArr.length-1
+        const lessonArr = Object.entries(lessonTree);
+        let deployIndex = 0;
         getAccessToken().then((token) => {
           for (const [lessonName, lessonFiles] of lessonArr) {
             let operationDetails = {
@@ -175,7 +176,7 @@ exports.generate_showcase = functions
               .then((channel) => {
                 console.log("from create prev channel", channel);
                 operationDetails.channel_id = channel.name.split("/")[3];
-                operationDetails.channel_url=channel.url
+                operationDetails.channel_url = channel.url;
                 //create version for this release
                 return createVersion(MY_APP.SITE_ID, token);
               })
@@ -262,13 +263,17 @@ exports.generate_showcase = functions
                 console.log(deployedRelease);
                 console.log(operationDetails);
                 firestore.collection(courseName).add(operationDetails);
+                deployIndex += 1;
 
-                if(lessonName===lessonArr[lastIndex][0]){
-                  console.log("apparently we at the last index hope there ar no problems with enoent the last files hmm")
+                console.log(deployIndex, lessonArr.length);
+                if (lessonArr.length === deployIndex) {
+                  console.log(
+                    "apparently we at the last index hope there ar no problems with enoent the last files hmm"
+                  );
                   //delete the github folder
-          fs.rmSync(coursefolderName, { recursive: true, force: true });
+                  fs.rmSync(coursefolderName, { recursive: true, force: true });
                 }
-                
+
                 //OHMYGOD IT WORKED
                 /////////////////////////
                 //these are precisely where you will do the next steps,
@@ -324,44 +329,58 @@ exports.delete_showcase = functions.https.onRequest(async (req, res) => {
   // http://localhost:5001/tutorial-showcaser/us-central1/delete_showcase?course_name=css_tutorials
   courseName = req.query.course_name;
   let tokena = "";
-  const lessons= await (await firestore.collection(courseName).get()).docs.map(doc=>doc.data());
+  const lessons = await (
+    await firestore.collection(courseName).get()
+  ).docs.map((doc) => doc.data());
   await getAccessToken()
     .then((token) => {
-      const deleteAllPromiseArr=lessons.reduce((delPromiseArr, currLesson)=>{
-        
-        //delete release//NOT CREATED//apparently releases
-        //cant be deleted should look into that option on 
-        //firbase console of limiting number of releases to keep
-        //delete version
-        //delete channel
-        delPromiseArr.push(
-          deleteVersion(MY_APP
-            .SITE_ID,token,currLesson.version_id)
-        ), deletePreviewChannel(MY_APP.SITE_ID,token,currLesson.channel_id)
-        return delPromiseArr
-      },[])
-      console.log(deleteAllPromiseArr)      
-      return Promise.all(deleteAllPromiseArr)
+      const deleteAllPromiseArr = lessons.reduce(
+        (delPromiseArr, currLesson) => {
+          delPromiseArr.push(
+            deleteVersion(MY_APP.SITE_ID, token, currLesson.version_id)
+          ),
+            deletePreviewChannel(MY_APP.SITE_ID, token, currLesson.channel_id);
+          return delPromiseArr;
+        },
+        []
+      );
+      console.log(deleteAllPromiseArr);
+      return Promise.all(deleteAllPromiseArr);
     })
     .then((allPromises) => {
       console.log(allPromises);
       //delete all documents from firebase
-        const ref = firestore.collection(courseName)
-  ref.onSnapshot((snapshot) => {
-    snapshot.docs.forEach((doc) => {
-      ref.doc(doc.id).delete()
-    })
-  })
-
-      // return deleteVersion(MY_APP.SITE_ID, tokena, "c449b362bef9bdbd");
+      const ref = firestore.collection(courseName);
+      ref.onSnapshot((snapshot) => {
+        snapshot.docs.forEach((doc) => {
+          ref.doc(doc.id).delete();
+        });
+      });
     });
-    console.log("i waited for the juge promise array to complete")
 });
 
-
 ///list and delete all channels method
-///think of a permanent solution for the rmsync problem
+exports.delete_all_preview_channels = functions.https.onRequest((req, res) => {
+  // http://127.0.0.1:5001/tutorial-showcaser/us-central1/delete_all_preview_channels
+  getAccessToken().then((token) => {
+    listPreviewChannels(MY_APP.SITE_ID, token)
+      .then((channelList) => {
+        const deletePromises = channelList.channels
+          .filter((channel) => channel.name.split("/")[3] !== MY_APP.SITE_ID)
+          .map((channel) => {
+            console.log(channel);
+            const channelId = channel.name.split("/")[3];
+            return deletePreviewChannel(MY_APP.SITE_ID, token, channelId);
+          });
+        return Promise.all(deletePromises);
+      })
+      .then((allDeletedChannels) => {
+        console.log(allDeletedChannels);
+        res.json(allDeletedChannels);
+      });
+  });
+});
 
-
+//i suppose just getting it to run once everyday is a good solution for now
 ////next phase crontab
 //////////////////////////end of the begging of the end/////////////////////
