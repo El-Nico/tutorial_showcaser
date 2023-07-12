@@ -22,6 +22,7 @@ const {
   listPreviewChannels,
 } = require("./hosting-api-crud");
 const path = require("path");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const firestore = admin.firestore();
 
 function download(url, dest) {
@@ -47,15 +48,13 @@ function download(url, dest) {
 
 ////////////////////////////the begging of the end///////////////////////////
 
-function downloadCourse(courseName, hostingFolder) {
+function downloadCourse(courseName) {
   return new Promise((resolve, reject) => {
     const url =
       MY_APP.GITHUB_DOWNLOAD_URL.START +
       courseName +
       MY_APP.GITHUB_DOWNLOAD_URL.END;
     const dest = "./temp.zip";
-
-    console.log("inside main download course function");
 
     download(url, dest)
       .catch((error) => {
@@ -140,8 +139,6 @@ function buildFiles(courseDir, hos) {
 exports.generate_showcase = functions
   // http://127.0.0.1:5001/tutorial-showcaser/us-central1/generate_showcase?course_name=react_course&hosting_folder=public
   //http://127.0.0.1:5001/tutorial-showcaser/us-central1/generate_showcase?course_name=css_tutorials
-
-  ///here i would start by deleting the old details
   .runWith({
     // Ensure the function has enough memory and time
     // to process large files
@@ -265,40 +262,11 @@ exports.generate_showcase = functions
                 firestore.collection(courseName).add(operationDetails);
                 deployIndex += 1;
 
-                console.log(deployIndex, lessonArr.length);
                 if (lessonArr.length === deployIndex) {
-                  console.log(
-                    "apparently we at the last index hope there ar no problems with enoent the last files hmm"
-                  );
                   //delete the github folder
                   fs.rmSync(coursefolderName, { recursive: true, force: true });
+                  res.status(200).json("last index deployed successfully");
                 }
-
-                //OHMYGOD IT WORKED
-                /////////////////////////
-                //these are precisely where you will do the next steps,
-                //where you will make sure all the necessary details have been tagged onto the
-                //operation details object
-                //and then begin the process of uploading it to firebase
-                //you can do a mock {} of the operation details object
-                //or just do pseudocode tomorrow
-                //newer version https://firebase.google.com/docs/functions/schedule-functions?gen=2nd
-                //this the one yohttps://www.freecodecamp.org/news/how-to-schedule-a-task-with-firebase-cloud-functions/
-
-                //////////////////////next steps 2
-                //setup a function that is timebased and triggers on channel expiry
-                //deletes all records from firebase
-                //deletes all preview channels and versions
-                //reconstructs the showcase
-                //starts listening in the future again
-
-                ///////next steps 3
-                //go back to frontend, read all urls from firebase and display
-
-                //PROVISIONAL END OF APP
-
-                //BEGIN FINETUNIGN FASE
-                //FINAL END OF APP
               });
           }
         });
@@ -307,8 +275,8 @@ exports.generate_showcase = functions
     //////////////////////////END OF BIG LOOP//////////////////////////////////////////
   });
 //make a delete preview channel here that takes in channel nae as query
-exports.delete_one_showcase = functions.https.onRequest((req, res) => {
-  //http://localhost:5001/tutorial-showcaser/us-central1/delete_one_showcase?channel_name=07_styling_links
+exports.delete_one_channel = functions.https.onRequest((req, res) => {
+  //http://localhost:5001/tutorial-showcaser/us-central1/delete_one_channel?channel_name=07_styling_links
   channelName = req.query.channel_name;
   let tokena = "";
   getAccessToken()
@@ -325,39 +293,48 @@ exports.delete_one_showcase = functions.https.onRequest((req, res) => {
 //read a list from firebase using coursename
 //for each document, delete each version, channel, release etc
 //finally delete document
-exports.delete_showcase = functions.https.onRequest(async (req, res) => {
-  // http://localhost:5001/tutorial-showcaser/us-central1/delete_showcase?course_name=css_tutorials
-  courseName = req.query.course_name;
-  let tokena = "";
-  const lessons = await (
-    await firestore.collection(courseName).get()
-  ).docs.map((doc) => doc.data());
-  await getAccessToken()
-    .then((token) => {
-      const deleteAllPromiseArr = lessons.reduce(
-        (delPromiseArr, currLesson) => {
-          delPromiseArr.push(
-            deleteVersion(MY_APP.SITE_ID, token, currLesson.version_id)
-          ),
-            deletePreviewChannel(MY_APP.SITE_ID, token, currLesson.channel_id);
-          return delPromiseArr;
-        },
-        []
-      );
-      console.log(deleteAllPromiseArr);
-      return Promise.all(deleteAllPromiseArr);
-    })
-    .then((allPromises) => {
-      console.log(allPromises);
-      //delete all documents from firebase
-      const ref = firestore.collection(courseName);
-      ref.onSnapshot((snapshot) => {
-        snapshot.docs.forEach((doc) => {
-          ref.doc(doc.id).delete();
+exports.delete_showcase = functions
+  .runWith({
+    timeoutSeconds: 180,
+  })
+  .https.onRequest(async (req, res) => {
+    // http://localhost:5001/tutorial-showcaser/us-central1/delete_showcase?course_name=css_tutorials
+    // http://localhost:5001/tutorial-showcaser/us-central1/delete_showcase?course_name=react_course
+    courseName = req.query.course_name;
+    const lessons = await (
+      await firestore.collection(courseName).get()
+    ).docs.map((doc) => doc.data());
+    await getAccessToken()
+      .then((token) => {
+        const deleteAllPromiseArr = lessons.reduce(
+          (delPromiseArr, currLesson) => {
+            delPromiseArr.push(
+              deleteVersion(MY_APP.SITE_ID, token, currLesson.version_id)
+            ),
+              deletePreviewChannel(
+                MY_APP.SITE_ID,
+                token,
+                currLesson.channel_id
+              );
+            return delPromiseArr;
+          },
+          []
+        );
+        return Promise.all(deleteAllPromiseArr);
+      })
+      .then((_) => {
+        //delete all documents from firebase
+        const ref = firestore.collection(courseName);
+        ref.onSnapshot((snapshot) => {
+          snapshot.docs.forEach((doc) => {
+            ref.doc(doc.id).delete();
+          });
         });
+
+        ///all documents deleted
+        res.status(200).json("all documents deleted successfully");
       });
-    });
-});
+  });
 
 ///list and delete all channels method
 exports.delete_all_preview_channels = functions.https.onRequest((req, res) => {
@@ -381,6 +358,45 @@ exports.delete_all_preview_channels = functions.https.onRequest((req, res) => {
   });
 });
 
-//i suppose just getting it to run once everyday is a good solution for now
-////next phase crontab
+exports.refreshCourses = onSchedule(
+  //every night at midnight
+  { schedule: "0 0 * * *", maxInstances: 10 },
+  async (event) => {
+    console.log(event);
+    firestore
+      .collection("crontest")
+      .add({ message: "every 60 seconds in africa a minute passes" });
+  }
+);
+
+// exports.trigger_hello = functions.https.onRequest((req, res) => {
+//   getAccessToken().then((token) => {
+//     const options = {
+//       method: "GET",
+//       hostname: "us-central1-tutorial-showcaser.cloudfunctions.net",
+//       port: null,
+//       path: `/helloEvery1Minute`,
+//       // headers: {
+//       //   Authorization: `Bearer ${token}`,
+//       // },
+//     };
+
+//     const requ = https.request(options, function (res) {
+//       const chunks = [];
+
+//       res.on("data", function (chunk) {
+//         chunks.push(chunk);
+//         console.log("chunk");
+//       });
+
+//       res.on("end", function () {
+//         const body = Buffer.concat(chunks);
+//         const bodyString = body.toString();
+//         console.log("del ver", bodyString);
+//       });
+//     });
+//     requ.end();
+//   });
+// });
+
 //////////////////////////end of the begging of the end/////////////////////
