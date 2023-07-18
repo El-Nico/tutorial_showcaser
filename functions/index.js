@@ -24,6 +24,62 @@ const {
 const path = require("path");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const firestore = admin.firestore();
+const os = require("os");
+
+exports.test_rand = functions.https.onRequest(async (req, res) => {
+  let courses = (await firestore.collection("courses").get()).docs.map((doc) =>
+    doc.data()
+  );
+
+  courses = courses.map((course) => course.title);
+  //delete all courses, then refresh
+  res.status(200).send(courses);
+});
+//create a function, create all, deleteall, but for now lets just do schedule
+exports.refresh_courses = onSchedule(
+  //every night at midnight
+  { schedule: "0 0 * * *", maxInstances: 10 },
+  async (event) => {
+    let courses = (await firestore.collection("courses").get()).docs.map(
+      (doc) => doc.data()
+    );
+    courses = courses.map((course) => {
+      const courseName = course.title;
+      const hostingFolder = course.hosting_folder ? course.hosting_folder : "";
+      return {
+        courseName: courseName,
+        hostingFolder: hostingFolder,
+      };
+    });
+    //first of all delete all
+    const delAllCourseShowcaseArr = courses.reduce(
+      (delPromiseArr, currentCourse) => {
+        delPromiseArr.push(delete_showcase_local(currentCourse.courseName));
+        return delPromiseArr;
+      },
+      []
+    );
+    const deletedAll = await Promise.all(delAllCourseShowcaseArr);
+    console.log(deletedAll);
+
+    //then generate all
+    const genAllCourseShowcaseArr = courses.reduce(
+      (genPromiseArr, currentCourse) => {
+        genPromiseArr.push(
+          generate_showcase_local(
+            currentCourse.courseName,
+            currentCourse.hostingFolder
+          )
+        );
+        return genPromiseArr;
+      },
+      []
+    );
+
+    const genAll = await Promise.all(genAllCourseShowcaseArr);
+    console.log(genAll);
+  }
+);
 
 function download(url, dest) {
   console.log("inside sub download function");
@@ -54,20 +110,18 @@ function downloadCourse(courseName) {
       MY_APP.GITHUB_DOWNLOAD_URL.START +
       courseName +
       MY_APP.GITHUB_DOWNLOAD_URL.END;
-    const dest = "./temp.zip";
+    const dest = os.tmpdir() + "/temp.zip";
 
     download(url, dest)
       .catch((error) => {
         reject(error);
       })
       .then((temp_url) => {
-        console.log(temp_url);
-        console.log("zip download done");
-        console.log("decompression started");
-        return decompress(dest, "./");
+        return decompress(dest, os.tmpdir()); //"./"
       })
       .then((files) => {
-        const parentDir = files[0].path.split("/")[0];
+        console.log(os.tmpdir() + files[0].path);
+        const parentDir = os.tmpdir() + "/" + files[0].path;
         //delete temp.zip
         fs.rmSync(dest, { recursive: true, force: true });
         console.log(parentDir, "done!");
@@ -136,19 +190,8 @@ function buildFiles(courseDir, hos) {
   });
 }
 
-exports.generate_showcase = functions
-  // http://127.0.0.1:5001/tutorial-showcaser/us-central1/generate_showcase?course_name=react_course&hosting_folder=public
-  //http://127.0.0.1:5001/tutorial-showcaser/us-central1/generate_showcase?course_name=css_tutorials
-  .runWith({
-    // Ensure the function has enough memory and time
-    // to process large files
-    timeoutSeconds: 300,
-    memory: "1GB",
-  })
-  .https.onRequest(async (req, res) => {
-    const courseName = req.query.course_name;
-    const hostingFolder = req.query.hosting_folder || "";
-    let coursefolderName = "";
+function generate_showcase_local(courseName, hostingFolder) {
+  return new Promise((resolve, reject) => {
     console.log(courseName, hostingFolder);
 
     downloadCourse(courseName, hostingFolder)
@@ -265,14 +308,45 @@ exports.generate_showcase = functions
                 if (lessonArr.length === deployIndex) {
                   //delete the github folder
                   fs.rmSync(coursefolderName, { recursive: true, force: true });
-                  res.status(200).json("last index deployed successfully");
+                  resolve("last index deployed successfully");
                 }
               });
           }
         });
       });
+  });
+}
+//make a delete preview channel here that takes in channel nae as query
+exports.delete_one_channel = functions.https.onRequest((req, res) => {
+  //http://localhost:5001/tutorial-showcaser/us-central1/delete_one_channel?channel_name=07_styling_links
+  channelName = req.query.channel_name;
+  let tokena = "";
+  getAccessToken()
+    .then((token) => {
+      tokena = token;
+      return deletePreviewChannel(MY_APP.SITE_ID, token, channelName);
+    })
+    .then((allPromises) => {
+      console.log(allPromises);
+      // return deleteVersion(MY_APP.SITE_ID, tokena, "c449b362bef9bdbd");
+    });
+});
 
-    //////////////////////////END OF BIG LOOP//////////////////////////////////////////
+exports.generate_showcase = functions
+  // http://127.0.0.1:5001/tutorial-showcaser/us-central1/generate_showcase?course_name=react_course&hosting_folder=public
+  //http://127.0.0.1:5001/tutorial-showcaser/us-central1/generate_showcase?course_name=css_tutorials
+  .runWith({
+    // Ensure the function has enough memory and time
+    // to process large files
+    timeoutSeconds: 300,
+    memory: "1GB",
+  })
+  .https.onRequest(async (req, res) => {
+    const courseName = req.query.course_name;
+    const hostingFolder = req.query.hosting_folder || "";
+    generate_showcase_local(courseName, hostingFolder).then((result) => {
+      res.status(200).json(result);
+    });
   });
 //make a delete preview channel here that takes in channel nae as query
 exports.delete_one_channel = functions.https.onRequest((req, res) => {
@@ -290,6 +364,56 @@ exports.delete_one_channel = functions.https.onRequest((req, res) => {
     });
 });
 
+async function delete_showcase_local(courseName) {
+  const lessons = (await firestore.collection(courseName).get()).docs.map(
+    (doc) => doc.data()
+  );
+  let tokena = "";
+  return new Promise((resolve, reject) => {
+    getAccessToken()
+      .then((token) => {
+        tokena = token;
+        const deleteAllChannelArr = lessons.reduce(
+          (delPromiseArr, currLesson) => {
+            delPromiseArr.push(
+              deletePreviewChannel(MY_APP.SITE_ID, token, currLesson.channel_id)
+            );
+            return delPromiseArr;
+          },
+          []
+        );
+        return Promise.all(deleteAllChannelArr);
+      })
+      .then((allPromises) => {
+        console.log("channels deleted" + allPromises);
+        const deleteAllVersionArr = lessons.reduce(
+          (delPromiseArr, currLesson) => {
+            delPromiseArr.push(
+              deleteVersion(MY_APP.SITE_ID, tokena, currLesson.version_id)
+            );
+            return delPromiseArr;
+          },
+          []
+        );
+        return Promise.all(deleteAllVersionArr);
+      })
+      .then((allVersionPromise) => {
+        console.log(allVersionPromise);
+        //should get 10 items here
+        //delete all documents from firebase
+        const ref = firestore.collection(courseName);
+        ref.onSnapshot((snapshot) => {
+          snapshot.docs.forEach((doc) => {
+            ref.doc(doc.id).delete();
+          });
+        });
+
+        ///all documents deleted
+        resolve("all documents deleted successfully");
+      });
+  });
+}
+
 //read a list from firebase using coursename
 //for each document, delete each version, channel, release etc
 //finally delete document
@@ -301,39 +425,9 @@ exports.delete_showcase = functions
     // http://localhost:5001/tutorial-showcaser/us-central1/delete_showcase?course_name=css_tutorials
     // http://localhost:5001/tutorial-showcaser/us-central1/delete_showcase?course_name=react_course
     courseName = req.query.course_name;
-    const lessons = await (
-      await firestore.collection(courseName).get()
-    ).docs.map((doc) => doc.data());
-    await getAccessToken()
-      .then((token) => {
-        const deleteAllPromiseArr = lessons.reduce(
-          (delPromiseArr, currLesson) => {
-            delPromiseArr.push(
-              deleteVersion(MY_APP.SITE_ID, token, currLesson.version_id)
-            ),
-              deletePreviewChannel(
-                MY_APP.SITE_ID,
-                token,
-                currLesson.channel_id
-              );
-            return delPromiseArr;
-          },
-          []
-        );
-        return Promise.all(deleteAllPromiseArr);
-      })
-      .then((_) => {
-        //delete all documents from firebase
-        const ref = firestore.collection(courseName);
-        ref.onSnapshot((snapshot) => {
-          snapshot.docs.forEach((doc) => {
-            ref.doc(doc.id).delete();
-          });
-        });
-
-        ///all documents deleted
-        res.status(200).json("all documents deleted successfully");
-      });
+    delete_showcase_local(courseName).then((deleted) => {
+      res.status(200).json(deleted);
+    });
   });
 
 ///list and delete all channels method
@@ -357,17 +451,6 @@ exports.delete_all_preview_channels = functions.https.onRequest((req, res) => {
       });
   });
 });
-
-exports.refreshCourses = onSchedule(
-  //every night at midnight
-  { schedule: "0 0 * * *", maxInstances: 10 },
-  async (event) => {
-    console.log(event);
-    firestore
-      .collection("crontest")
-      .add({ message: "every 60 seconds in africa a minute passes" });
-  }
-);
 
 // exports.trigger_hello = functions.https.onRequest((req, res) => {
 //   getAccessToken().then((token) => {

@@ -4,6 +4,8 @@ decide if to do as promises
 upload both
 
 refactor code to work with /tmp directory
+https://medium.com/@hpoleselo/writing-files-within-a-cloud-function-tmp-to-the-rescue-a47a6b482758
+https://console.cloud.google.com/functions
 
 
 write code for invoking and chaining, delete, then recreate in cronfunction

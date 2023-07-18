@@ -223,3 +223,16 @@ return (
 //                 );
 //                 console.log(promises);
 //               }
+
+// console.log(process.cwd());
+//   console.log(os.tmpdir());
+//   fs.readdirSync(process.cwd()).forEach((file) => {
+//     console.log(file);
+//   });
+//   fs.writeFileSync(os.tmpdir() + "/test.txt", "hello world", "utf8");
+//   let read = fs.readFileSync(os.tmpdir() + "/test.txt", "utf8"); // /tmp/test.txt
+//   res.status(200).send(read);
+
+//   firestore
+//     .collection("crontest")
+//     .add({ message: "every 60 seconds in africa a minute passes" });
