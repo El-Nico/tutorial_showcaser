@@ -12,3 +12,9 @@ write code for invoking and chaining, delete, then recreate in cronfunction
 test cronfunction
 
 return to frontend
+
+// http://localhost:5001/tutorial-showcaser/us-central1/delete_showcase?course_name=css_tutorials
+    // http://localhost:5001/tutorial-showcaser/us-central1/delete_showcase?course_name=react_course
+    courseName = req.query.course_name;
+
+http://127.0.0.1:5001/tutorial-showcaser/us-central1/delete_all_preview_channels

@@ -1,5 +1,6 @@
 require("dotenv").config();
 const functions = require("firebase-functions");
+const { onRequest } = require("firebase-functions/v2/https");
 // The Firebase Admin SDK to access Firestore.
 const admin = require("firebase-admin");
 admin.initializeApp();
@@ -25,59 +26,63 @@ const path = require("path");
 const { onSchedule } = require("firebase-functions/v2/scheduler");
 const firestore = admin.firestore();
 const os = require("os");
+const crypto = require("crypto");
+const { FieldValue } = require("firebase-admin/firestore");
 
-exports.test_rand = functions.https.onRequest(async (req, res) => {
+async function refresh_all_showcases_local() {
   let courses = (await firestore.collection("courses").get()).docs.map((doc) =>
     doc.data()
   );
+  courses = courses.map((course) => {
+    const courseName = course.title;
+    const hostingFolder = course.hosting_folder ? course.hosting_folder : "";
+    return {
+      courseName: courseName,
+      hostingFolder: hostingFolder,
+    };
+  });
+  //first of all delete all
+  const delAllCourseShowcaseArr = courses.reduce(
+    (delPromiseArr, currentCourse) => {
+      delPromiseArr.push(delete_showcase_local(currentCourse.courseName));
+      return delPromiseArr;
+    },
+    []
+  );
+  const deletedAll = await Promise.all(delAllCourseShowcaseArr);
+  console.log(deletedAll);
 
-  courses = courses.map((course) => course.title);
-  //delete all courses, then refresh
-  res.status(200).send(courses);
-});
+  //then generate all
+  let genResults = [];
+  for (const course of courses) {
+    let generatedShowcase = await generate_showcase_local(
+      course.courseName,
+      course.hostingFolder
+    );
+    genResults.push(generatedShowcase);
+  }
+
+  return { deleted: deletedAll, generated: genResults };
+}
+exports.test_rand = onRequest(
+  { timeoutSeconds: 540, memory: "1GiB" },
+  async (req, res) => {
+    const results = await refresh_all_showcases_local();
+    res.status(200).send(results);
+  }
+);
 //create a function, create all, deleteall, but for now lets just do schedule
-exports.refresh_courses = onSchedule(
+exports.refresh_all_showcases = onSchedule(
   //every night at midnight
-  { schedule: "0 0 * * *", maxInstances: 10 },
+  {
+    schedule: "every day 00:00",
+    maxInstances: 10,
+    timeoutSeconds: 540,
+    memory: "1GiB",
+  },
   async (event) => {
-    let courses = (await firestore.collection("courses").get()).docs.map(
-      (doc) => doc.data()
-    );
-    courses = courses.map((course) => {
-      const courseName = course.title;
-      const hostingFolder = course.hosting_folder ? course.hosting_folder : "";
-      return {
-        courseName: courseName,
-        hostingFolder: hostingFolder,
-      };
-    });
-    //first of all delete all
-    const delAllCourseShowcaseArr = courses.reduce(
-      (delPromiseArr, currentCourse) => {
-        delPromiseArr.push(delete_showcase_local(currentCourse.courseName));
-        return delPromiseArr;
-      },
-      []
-    );
-    const deletedAll = await Promise.all(delAllCourseShowcaseArr);
-    console.log(deletedAll);
-
-    //then generate all
-    const genAllCourseShowcaseArr = courses.reduce(
-      (genPromiseArr, currentCourse) => {
-        genPromiseArr.push(
-          generate_showcase_local(
-            currentCourse.courseName,
-            currentCourse.hostingFolder
-          )
-        );
-        return genPromiseArr;
-      },
-      []
-    );
-
-    const genAll = await Promise.all(genAllCourseShowcaseArr);
-    console.log(genAll);
+    const results = await refresh_all_showcases_local();
+    console.log(results);
   }
 );
 
@@ -97,6 +102,7 @@ function download(url, dest) {
       .on("error", function (err) {
         // Handle errors
         fs.unlink(dest); // Delete the file async. (But we don't check the result)
+        console.log("or perhaps the error was actually gen here");
         reject(err.message);
       });
   });
@@ -114,9 +120,11 @@ function downloadCourse(courseName) {
 
     download(url, dest)
       .catch((error) => {
+        console.log("error was caouth iin her");
         reject(error);
       })
       .then((temp_url) => {
+        console.log("this is before decompress");
         return decompress(dest, os.tmpdir()); //"./"
       })
       .then((files) => {
@@ -192,8 +200,8 @@ function buildFiles(courseDir, hos) {
 
 function generate_showcase_local(courseName, hostingFolder) {
   return new Promise((resolve, reject) => {
-    console.log(courseName, hostingFolder);
-
+    const previewcollectionId =
+      courseName + "_" + crypto.randomBytes(20).toString("hex");
     downloadCourse(courseName, hostingFolder)
       .then((courseDir) => {
         coursefolderName = courseDir;
@@ -302,10 +310,21 @@ function generate_showcase_local(courseName, hostingFolder) {
                 delete operationDetails.urlHexBufferTree;
                 console.log(deployedRelease);
                 console.log(operationDetails);
-                firestore.collection(courseName).add(operationDetails);
+                firestore.collection(previewcollectionId).add(operationDetails);
                 deployIndex += 1;
 
                 if (lessonArr.length === deployIndex) {
+                  firestore
+                    .collection("courses")
+                    .where("title", "==", courseName)
+                    .get()
+                    .then((querySnapshot) => {
+                      querySnapshot.forEach((document) => {
+                        document.ref.update({
+                          preview_channels: previewcollectionId,
+                        });
+                      });
+                    });
                   //delete the github folder
                   fs.rmSync(coursefolderName, { recursive: true, force: true });
                   resolve("last index deployed successfully");
@@ -332,22 +351,18 @@ exports.delete_one_channel = functions.https.onRequest((req, res) => {
     });
 });
 
-exports.generate_showcase = functions
-  // http://127.0.0.1:5001/tutorial-showcaser/us-central1/generate_showcase?course_name=react_course&hosting_folder=public
-  //http://127.0.0.1:5001/tutorial-showcaser/us-central1/generate_showcase?course_name=css_tutorials
-  .runWith({
-    // Ensure the function has enough memory and time
-    // to process large files
-    timeoutSeconds: 300,
-    memory: "1GB",
-  })
-  .https.onRequest(async (req, res) => {
+// http://127.0.0.1:5001/tutorial-showcaser/us-central1/generate_showcase?course_name=react_course&hosting_folder=public
+//http://127.0.0.1:5001/tutorial-showcaser/us-central1/generate_showcase?course_name=css_tutorials
+exports.generate_showcase = onRequest(
+  { timeoutSeconds: 300, memory: "1GiB", maxInstances: 10 },
+  async (req, res) => {
     const courseName = req.query.course_name;
     const hostingFolder = req.query.hosting_folder || "";
     generate_showcase_local(courseName, hostingFolder).then((result) => {
       res.status(200).json(result);
     });
-  });
+  }
+);
 //make a delete preview channel here that takes in channel nae as query
 exports.delete_one_channel = functions.https.onRequest((req, res) => {
   //http://localhost:5001/tutorial-showcaser/us-central1/delete_one_channel?channel_name=07_styling_links
@@ -365,9 +380,18 @@ exports.delete_one_channel = functions.https.onRequest((req, res) => {
 });
 
 async function delete_showcase_local(courseName) {
-  const lessons = (await firestore.collection(courseName).get()).docs.map(
-    (doc) => doc.data()
-  );
+  //first get the preview collection id
+  const previewcollectionId = (
+    await firestore.collection("courses").where("title", "==", courseName).get()
+  ).docs[0].data().preview_channels;
+  console.log(previewcollectionId);
+  // .then((querySnapshot) => {
+  //   previewcollectionId = querySnapshot[0];
+  //   console.log(previewcollectionId); //.getString("preview_channels");
+  // });
+  const lessons = (
+    await firestore.collection(previewcollectionId).get()
+  ).docs.map((doc) => doc.data());
   let tokena = "";
   return new Promise((resolve, reject) => {
     getAccessToken()
@@ -401,13 +425,23 @@ async function delete_showcase_local(courseName) {
         console.log(allVersionPromise);
         //should get 10 items here
         //delete all documents from firebase
-        const ref = firestore.collection(courseName);
+        const ref = firestore.collection(previewcollectionId);
         ref.onSnapshot((snapshot) => {
           snapshot.docs.forEach((doc) => {
             ref.doc(doc.id).delete();
           });
         });
-
+        firestore
+          .collection("courses")
+          .where("title", "==", courseName)
+          .get()
+          .then((querySnapshot) => {
+            querySnapshot.forEach((document) => {
+              document.ref.update({
+                preview_channels: FieldValue.delete(),
+              });
+            });
+          });
         ///all documents deleted
         resolve("all documents deleted successfully");
       });
@@ -417,18 +451,17 @@ async function delete_showcase_local(courseName) {
 //read a list from firebase using coursename
 //for each document, delete each version, channel, release etc
 //finally delete document
-exports.delete_showcase = functions
-  .runWith({
-    timeoutSeconds: 180,
-  })
-  .https.onRequest(async (req, res) => {
-    // http://localhost:5001/tutorial-showcaser/us-central1/delete_showcase?course_name=css_tutorials
-    // http://localhost:5001/tutorial-showcaser/us-central1/delete_showcase?course_name=react_course
+// http://localhost:5001/tutorial-showcaser/us-central1/delete_showcase?course_name=css_tutorials
+// http://localhost:5001/tutorial-showcaser/us-central1/delete_showcase?course_name=react_course
+exports.delete_showcase = onRequest(
+  { timeoutSeconds: 180, maxInstances: 10 },
+  async (req, res) => {
     courseName = req.query.course_name;
     delete_showcase_local(courseName).then((deleted) => {
       res.status(200).json(deleted);
     });
-  });
+  }
+);
 
 ///list and delete all channels method
 exports.delete_all_preview_channels = functions.https.onRequest((req, res) => {
@@ -451,35 +484,4 @@ exports.delete_all_preview_channels = functions.https.onRequest((req, res) => {
       });
   });
 });
-
-// exports.trigger_hello = functions.https.onRequest((req, res) => {
-//   getAccessToken().then((token) => {
-//     const options = {
-//       method: "GET",
-//       hostname: "us-central1-tutorial-showcaser.cloudfunctions.net",
-//       port: null,
-//       path: `/helloEvery1Minute`,
-//       // headers: {
-//       //   Authorization: `Bearer ${token}`,
-//       // },
-//     };
-
-//     const requ = https.request(options, function (res) {
-//       const chunks = [];
-
-//       res.on("data", function (chunk) {
-//         chunks.push(chunk);
-//         console.log("chunk");
-//       });
-
-//       res.on("end", function () {
-//         const body = Buffer.concat(chunks);
-//         const bodyString = body.toString();
-//         console.log("del ver", bodyString);
-//       });
-//     });
-//     requ.end();
-//   });
-// });
-
 //////////////////////////end of the begging of the end/////////////////////
