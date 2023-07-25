@@ -265,8 +265,6 @@ exports.uploadVersionFile = function (
 
       res.on("end", function () {
         const body = Buffer.concat(chunks);
-        console.log(body.toString());
-        console.log("the function has apperently ended");
         resolve(body.toString());
       });
     });
@@ -335,7 +333,6 @@ exports.create_deployRelease = function (
 
       res.on("end", function () {
         const body = Buffer.concat(chunks);
-        console.log(body.toString());
         resolve(body.toString());
       });
     });

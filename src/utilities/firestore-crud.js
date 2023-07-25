@@ -34,6 +34,18 @@ export const getCourses = async () => {
   return courses;
 };
 
+//// get Lessons with coursename
+export const getLessons = async (courseName, courses) => {
+  const previewCollectionId = await courses.find(
+    (course) => course.title === courseName
+  ).preview_channels;
+  const lessonsCollectionRef = collection(db, previewCollectionId);
+  let lessons = [];
+  const data = await getDocs(lessonsCollectionRef);
+  lessons = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+  return lessons;
+};
+
 ////dont really need all these now
 // //// update courses
 // const updateCourses = async (id, age) => {

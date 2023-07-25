@@ -29,13 +29,76 @@ const os = require("os");
 const crypto = require("crypto");
 const { FieldValue } = require("firebase-admin/firestore");
 
+async function delete_all_showcases_local() {
+  let courses = await firestore.collection("courses").get();
+  courses = courses.docs
+    .map((doc) => doc.data())
+    .map((course) => {
+      const courseName = course.title;
+      const hostingFolder = course.hosting_folder ? course.hosting_folder : "";
+      return {
+        courseName: courseName,
+        hostingFolder: hostingFolder,
+      };
+    });
+  //first of all delete all
+  const delAllCourseShowcaseArr = courses.reduce(
+    (delPromiseArr, currentCourse) => {
+      delPromiseArr.push(delete_showcase_local(currentCourse.courseName));
+      return delPromiseArr;
+    },
+    []
+  );
+  return Promise.all(delAllCourseShowcaseArr);
+}
+
+async function generate_all_showcases_local() {
+  let courses = (await firestore.collection("courses").get()).docs.map((doc) =>
+    doc.data()
+  );
+  courses = courses.map((course) => {
+    const courseName = course.title;
+    const hostingFolder = course.hosting_folder ? course.hosting_folder : null;
+    return {
+      courseName: courseName,
+      hostingFolder: hostingFolder,
+    };
+  });
+  //then generate all
+  let genResults = [];
+  for (const course of courses) {
+    let generatedShowcase = await generate_showcase_local(
+      course.courseName,
+      course.hostingFolder
+    );
+    genResults.push(generatedShowcase);
+  }
+
+  return Promise.resolve(genResults);
+}
+exports.generate_all_showcases = onRequest(
+  { timeoutSeconds: 300, memory: "1GiB", maxInstances: 10 },
+  async (req, res) => {
+    generate_all_showcases_local().then((genResults) => res.json(genResults));
+  }
+);
+
+exports.delete_all_showcases = onRequest(
+  { timeoutSeconds: 300, memory: "1GiB", maxInstances: 10 },
+  async (req, res) => {
+    delete_all_showcases_local().then((delResults) => {
+      res.json(delResults);
+    });
+  }
+);
+
 async function refresh_all_showcases_local() {
   let courses = (await firestore.collection("courses").get()).docs.map((doc) =>
     doc.data()
   );
   courses = courses.map((course) => {
     const courseName = course.title;
-    const hostingFolder = course.hosting_folder ? course.hosting_folder : "";
+    const hostingFolder = course.hosting_folder ? course.hosting_folder : null;
     return {
       courseName: courseName,
       hostingFolder: hostingFolder,
@@ -87,14 +150,12 @@ exports.refresh_all_showcases = onSchedule(
 );
 
 function download(url, dest) {
-  console.log("inside sub download function");
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest);
     const request = https
       .get(url, function (response) {
         response.pipe(file);
         file.on("finish", function () {
-          console.log("sub download finsisheshe from inside sub download");
           file.close(); // close() is async, call cb after close completes.
           resolve(dest);
         });
@@ -102,7 +163,6 @@ function download(url, dest) {
       .on("error", function (err) {
         // Handle errors
         fs.unlink(dest); // Delete the file async. (But we don't check the result)
-        console.log("or perhaps the error was actually gen here");
         reject(err.message);
       });
   });
@@ -120,11 +180,9 @@ function downloadCourse(courseName) {
 
     download(url, dest)
       .catch((error) => {
-        console.log("error was caouth iin her");
         reject(error);
       })
       .then((temp_url) => {
-        console.log("this is before decompress");
         return decompress(dest, os.tmpdir()); //"./"
       })
       .then((files) => {
@@ -132,7 +190,6 @@ function downloadCourse(courseName) {
         const parentDir = os.tmpdir() + "/" + files[0].path;
         //delete temp.zip
         fs.rmSync(dest, { recursive: true, force: true });
-        console.log(parentDir, "done!");
         //next steps is to process the folder
 
         resolve(parentDir);
@@ -202,7 +259,7 @@ function generate_showcase_local(courseName, hostingFolder) {
   return new Promise((resolve, reject) => {
     const previewcollectionId =
       courseName + "_" + crypto.randomBytes(20).toString("hex");
-    downloadCourse(courseName, hostingFolder)
+    downloadCourse(courseName)
       .then((courseDir) => {
         coursefolderName = courseDir;
         return buildFiles(courseDir, hostingFolder);
@@ -222,14 +279,12 @@ function generate_showcase_local(courseName, hostingFolder) {
               operationDetails.lessonName
             )
               .then((channel) => {
-                console.log("from create prev channel", channel);
                 operationDetails.channel_id = channel.name.split("/")[3];
                 operationDetails.channel_url = channel.url;
                 //create version for this release
                 return createVersion(MY_APP.SITE_ID, token);
               })
               .then((version) => {
-                console.log("version for release", version);
                 operationDetails.version_id = version.name.split("/")[3];
                 //create hashes for all files to be uploaded
                 return createFileHashes(lessonFiles);
@@ -244,14 +299,12 @@ function generate_showcase_local(courseName, hostingFolder) {
                   (mappedTree, currValue) => {
                     console.log(currValue);
                     //take away first 2 parts of url including coursname and folder name
-                    const splitPoint = currValue.url
-                      .split("/")
-                      .includes(hostingFolder)
-                      ? 3
-                      : 2;
-                    const url =
-                      "/" +
-                      currValue.url.split("/").slice(splitPoint).join("/");
+                    const url = currValue.url.split("/").includes(hostingFolder)
+                      ? currValue.url.split(
+                          operationDetails.channel_id + "/" + hostingFolder
+                        )[1]
+                      : currValue.url.split(operationDetails.channel_id)[1];
+                    console.log(url);
                     const hex = currValue.hex;
                     const mappedCurrValue = {};
                     mappedCurrValue[url] = hex;
@@ -273,7 +326,6 @@ function generate_showcase_local(courseName, hostingFolder) {
               })
               .then((res) => {
                 //upload files
-                console.log(res);
                 const promises = operationDetails.urlHexBufferTree.map(
                   (file) => {
                     return uploadVersionFile(
@@ -289,7 +341,6 @@ function generate_showcase_local(courseName, hostingFolder) {
               })
               .then((allPromises) => {
                 //delete the github folder
-                console.log(allPromises);
                 return finalizeVersion(
                   token,
                   MY_APP.SITE_ID,
@@ -297,7 +348,6 @@ function generate_showcase_local(courseName, hostingFolder) {
                 );
               })
               .then((finalizedVersion) => {
-                console.log(finalizedVersion);
                 return create_deployRelease(
                   token,
                   MY_APP.SITE_ID,
@@ -308,8 +358,6 @@ function generate_showcase_local(courseName, hostingFolder) {
               .then((deployedRelease) => {
                 ///chanelid,versionid,lessonname,url,,,urlHexBufferTree
                 delete operationDetails.urlHexBufferTree;
-                console.log(deployedRelease);
-                console.log(operationDetails);
                 firestore.collection(previewcollectionId).add(operationDetails);
                 deployIndex += 1;
 

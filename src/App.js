@@ -22,15 +22,17 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { getCourses } from "./utilities/firestore-crud";
-import { getLessons } from "./utilities/github-api";
+import { getLessons } from "./utilities/firestore-crud";
 
 function App() {
   const [courses, updateCourses] = useState([]);
-  const [defaultCourse, updateDefaultCourse] = useState("");
+  const [defaultSelectCourse, updateDefaultSelectCourse] =
+    useState("css_tutorials");
   const [selectOptions, updateSelectOptions] = useState([
     { label: "course 01", value: "placeholder" },
   ]);
   const [lessons, updateLessons] = useState([]);
+  const [selectLesson, updateSelectLesson] = useState({});
 
   //get courses
   useEffect(() => {
@@ -45,25 +47,32 @@ function App() {
   //render courses select options
   useEffect(() => {
     const selectOptions = courses.map((course) => {
-      if (course.default) updateDefaultCourse(course.title);
+      if (course.default) updateDefaultSelectCourse(course.title);
 
-      return { label: course.title, value: course.title, id: course.id };
+      return {
+        label: course.title,
+        value: course.title,
+        id: course.id,
+        previewCollectionId: course.preview_channels,
+      };
     });
     updateSelectOptions([...selectOptions]);
   }, [courses]);
 
-  // make api call to github for render courses lessons
+  // make api call to firebase for render courses lessons
   useEffect(() => {
     async function fetchLessonData() {
-      const lessonData = await getLessons(defaultCourse);
+      console.log(courses, defaultSelectCourse);
+
+      const lessonData = await getLessons(defaultSelectCourse, courses);
       if (lessonData) {
-        const mappedLessonData = lessonData.data.map((lesson) => lesson.name);
-        updateLessons(mappedLessonData);
+        //const mappedLessonData = lessonData.data.map((lesson) => lesson.name);
+        updateLessons(lessonData);
       }
     }
     fetchLessonData();
     console.log(lessons);
-  }, [defaultCourse]);
+  }, [defaultSelectCourse]);
 
   //make api call for course ifram
   return (
@@ -71,8 +80,8 @@ function App() {
       <header className="header el">
         <div className="custom-select">
           <select
-            value={defaultCourse}
-            onChange={(e) => updateDefaultCourse(e.target.value)}
+            value={defaultSelectCourse}
+            onChange={(e) => updateDefaultSelectCourse(e.target.value)}
           >
             {selectOptions.map((option) => (
               <option key={option.id} value={option.value}>
@@ -92,8 +101,8 @@ function App() {
           </div>
           <div className="box box2">
             <iframe
-              src="https://www.nicholas-eruba.com"
-              title="W3Schools Free Online Web Tutorials"
+              src={selectLesson.channel_url}
+              title={selectLesson.lessonName}
               width={"100%"}
               height={"100%"}
             ></iframe>
@@ -102,7 +111,13 @@ function App() {
       </main>
       <aside className="sidebar el">
         {lessons.map((lesson) => (
-          <button>{lesson}</button>
+          <button
+            onClick={(_) => {
+              updateSelectLesson({ ...lesson });
+            }}
+          >
+            {lesson.lessonName}
+          </button>
         ))}
       </aside>
 

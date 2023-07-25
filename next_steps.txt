@@ -18,3 +18,14 @@ return to frontend
     courseName = req.query.course_name;
 
 http://127.0.0.1:5001/tutorial-showcaser/us-central1/delete_all_preview_channels
+
+***whats the plan for frontend***
+1. get list from github for each course
+2. display list
+3. get list from firebase
+3. match github list with firebase list and form into one object
+***-***
+
+figure out what to do with readmemd i gues
+
+
