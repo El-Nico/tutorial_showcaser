@@ -25,6 +25,22 @@ import {
 
 //collection references
 const coursesCollectionRef = collection(db, "courses");
+const showcasesCollectionRef = collection(db, "showcases");
+
+const getData = async (ref) => {
+  let docData = [];
+  const data = await getDocs(ref);
+  docData = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+  return docData;
+};
+
+/// get showcases
+export const getShowcases = async () => {
+  let showcases = [];
+  const data = await getDocs(showcasesCollectionRef);
+  showcases = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+  return showcases;
+};
 
 //// get courses
 export const getCourses = async () => {

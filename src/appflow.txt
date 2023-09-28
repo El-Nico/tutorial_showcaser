@@ -1,0 +1,11 @@
+onstart->make call to firestore showcases
+->for each showcase->order by rank_>add to showcase list state->
+display on screen->select one preview_>display preview url in main->
+getreadme md for github->display in section 1->
+has ubchannels?->for each subchannel->add to showcase list state->
+display channel previiew in main etc
+
+put mock subchannels in firestore
+flatten subchannels and return it to get showcases in useEffect
+should useeffect just get completeley finisshed data whatsoever
+tgat was tge job of store.tsx in rsm course

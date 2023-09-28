@@ -1,91 +1,70 @@
 import "./App.css";
-import { useState, useEffect } from "react";
-import { storage } from "./firebase";
-import { ref, uploadBytes, listAll, getDownloadURL } from "firebase/storage";
-import { v4 } from "uuid";
-import { tutorials } from "./utilities/keys";
-import { testa } from "./utilities/jszipcode";
-import {
-  URLtoFile,
-  downloadFile,
-  getgit,
-  getgit2,
-} from "./utilities/filewrangler";
-import { useNavigate } from "react-router-dom";
-import { db } from "./firebase";
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  updateDoc,
-} from "firebase/firestore";
-import { getCourses } from "./utilities/firestore-crud";
+import { useState, useEffect, useReducer } from "react";
+import { getCourses, getShowcases } from "./utilities/firestore-crud";
 import { getLessons } from "./utilities/firestore-crud";
 
+//react state management 59:54 unneseaary pairing of useffect and usestate should be avoid
+//ded
+
 function App() {
-  const [courses, updateCourses] = useState([]);
-  const [defaultSelectCourse, updateDefaultSelectCourse] =
-    useState("css_tutorials");
-  const [selectOptions, updateSelectOptions] = useState([
-    { label: "course 01", value: "placeholder" },
-  ]);
   const [lessons, updateLessons] = useState([]);
   const [selectLesson, updateSelectLesson] = useState({});
 
-  //get courses
+  const [state, dispatch] = useReducer(
+    (state, action) => {
+      switch (action.type) {
+        case "SET_SHOWCASES":
+          return { ...state, showcases: action.payload };
+        case "SET_SELECTED_SHOWCASE":
+          return { ...state, selectedShowcase: action.payload };
+        case "SET_SELECTED_AND_ALL_SHOWCASES":
+          return {
+            ...state,
+            showcases: action.payload.showcases,
+            selectedShowcase: action.payload.selectedShowcase,
+          };
+      }
+    },
+    {
+      showcases: [{ title: "example" }],
+      selectedShowcase: {
+        title: "example",
+        previewUrl: "http://example.com/",
+      },
+    }
+  );
+
+  //get all showcases
   useEffect(() => {
-    getCourses()
-      ///update courses state
-      .then((coursesData) => {
-        updateCourses([...coursesData]);
-        return coursesData;
+    getShowcases().then((showcases) => {
+      console.log(showcases);
+      dispatch({
+        type: "SET_SELECTED_AND_ALL_SHOWCASES",
+        payload: { showcases: showcases, selectedShowcase: showcases[0] },
       });
+    });
   }, []);
 
-  //render courses select options
-  useEffect(() => {
-    const selectOptions = courses.map((course) => {
-      if (course.default) updateDefaultSelectCourse(course.title);
-
-      return {
-        label: course.title,
-        value: course.title,
-        id: course.id,
-        previewCollectionId: course.preview_channels,
-      };
-    });
-    updateSelectOptions([...selectOptions]);
-  }, [courses]);
-
-  // make api call to firebase for render courses lessons
-  useEffect(() => {
-    async function fetchLessonData() {
-      console.log(courses, defaultSelectCourse);
-
-      const lessonData = await getLessons(defaultSelectCourse, courses);
-      if (lessonData) {
-        //const mappedLessonData = lessonData.data.map((lesson) => lesson.name);
-        updateLessons(lessonData);
-      }
-    }
-    fetchLessonData();
-    console.log(lessons);
-  }, [defaultSelectCourse]);
-
-  //make api call for course ifram
   return (
     <div className="App">
       <header className="header el">
         <div className="custom-select">
           <select
-            value={defaultSelectCourse}
-            onChange={(e) => updateDefaultSelectCourse(e.target.value)}
+            value={state.showcases[0].title}
+            onChange={(e) => {
+              const selectedShowcase = state.showcases.find(
+                (showcase) => showcase.title === e.target.value
+              );
+              dispatch({
+                type: "SET_SELECTED_SHOWCASE",
+                payload: selectedShowcase,
+              });
+              console.log("ran");
+            }}
           >
-            {selectOptions.map((option) => (
-              <option key={option.id} value={option.value}>
-                {option.label}
+            {state.showcases.map((showcase) => (
+              <option key={showcase.title} value={showcase.title}>
+                {showcase.title}
               </option>
             ))}
           </select>
@@ -101,12 +80,13 @@ function App() {
           </div>
           <div className="box box2">
             <iframe
-              src={selectLesson.channel_url}
-              title={selectLesson.lessonName}
+              src={state.selectedShowcase.previewUrl}
+              title={state.selectedShowcase.title}
               width={"100%"}
               height={"100%"}
             ></iframe>
           </div>
+          <div className="box box3">About this section</div>
         </div>
       </main>
       <aside className="sidebar el">
@@ -129,3 +109,5 @@ function App() {
 }
 
 export default App;
+// https://codesandbox.io/embed/markdown-editor-for-react-izdd6?fontsize=14&hidenavigation=1&theme=dark
+//  https://codesandbox.io/embed/react-markdown-preview-co1mj?fontsize=14&hidenavigation=1&theme=dark
