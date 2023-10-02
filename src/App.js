@@ -59,7 +59,6 @@ function App() {
                 type: "SET_SELECTED_SHOWCASE",
                 payload: selectedShowcase,
               });
-              console.log("ran");
             }}
           >
             {state.showcases.map((showcase) => (

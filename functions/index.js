@@ -93,21 +93,25 @@ exports.delete_all_showcases = onRequest(
 );
 
 async function refresh_all_showcases_local() {
-  let courses = (await firestore.collection("courses").get()).docs.map((doc) =>
-    doc.data()
-  );
+  let courses = (
+    await firestore
+      .collection("showcases")
+      .where("shouldUpdate", "==", true)
+      .get()
+  ).docs.map((doc) => doc.data());
   courses = courses.map((course) => {
-    const courseName = course.title;
-    const hostingFolder = course.hosting_folder ? course.hosting_folder : null;
+    const title = course.title;
+    const hosting_folder = course.hosting_folder ? course.hosting_folder : null;
     return {
-      courseName: courseName,
-      hostingFolder: hostingFolder,
+      title,
+      hosting_folder,
     };
   });
+  console.log(courses);
   //first of all delete all
   const delAllCourseShowcaseArr = courses.reduce(
     (delPromiseArr, currentCourse) => {
-      delPromiseArr.push(delete_showcase_local(currentCourse.courseName));
+      delPromiseArr.push(delete_showcase_local(currentCourse.title));
       return delPromiseArr;
     },
     []
@@ -118,10 +122,7 @@ async function refresh_all_showcases_local() {
   //then generate all
   let genResults = [];
   for (const course of courses) {
-    let generatedShowcase = await generate_showcase_local(
-      course.courseName,
-      course.hostingFolder
-    );
+    let generatedShowcase = await generate_showcase_local(course);
     genResults.push(generatedShowcase);
   }
 
@@ -131,6 +132,18 @@ exports.test_rand = onRequest(
   { timeoutSeconds: 540, memory: "1GiB" },
   async (req, res) => {
     const results = await refresh_all_showcases_local();
+    // const results = await generate_showcase_local({
+    //   title: "react_course",
+    //   hosting_folder: "public",
+    // });
+    // const results = await generate_showcase_local("css_tutorials", "");
+
+    //test these next
+    // const results = await delete_all_showcases_local();
+    // const results = await generate_all_showcases_local();
+
+    // const results = await delete_showcase_local("react_course");
+    // const results = await delete_showcase_local("css_tutorials");
     res.status(200).send(results);
   }
 );
@@ -255,10 +268,23 @@ function buildFiles(courseDir, hos) {
   });
 }
 
-function generate_showcase_local(courseName, hostingFolder) {
+function generate_showcase_local(existingShowcase = {}) {
   return new Promise((resolve, reject) => {
-    const previewcollectionId =
-      courseName + "_" + crypto.randomBytes(20).toString("hex");
+    // const previewcollectionId =
+    //   courseName + "_" + crypto.randomBytes(20).toString("hex");
+    let showcase = {
+      ...existingShowcase,
+      title: existingShowcase.title,
+      githubRepo:
+        existingShowcase.githubRepo ||
+        `https://github.com/El-Nico/${existingShowcase.title}`,
+      subchannels: [],
+      hasSubchannels: true,
+    };
+
+    let courseName = existingShowcase.title,
+      hostingFolder = existingShowcase.hosting_folder || null;
+    console.log(courseName, hostingFolder);
     downloadCourse(courseName)
       .then((courseDir) => {
         coursefolderName = courseDir;
@@ -358,21 +384,16 @@ function generate_showcase_local(courseName, hostingFolder) {
               .then((deployedRelease) => {
                 ///chanelid,versionid,lessonname,url,,,urlHexBufferTree
                 delete operationDetails.urlHexBufferTree;
-                firestore.collection(previewcollectionId).add(operationDetails);
+                // firestore.collection(previewcollectionId).add(operationDetails);
+                showcase.subchannels.push(operationDetails);
                 deployIndex += 1;
 
                 if (lessonArr.length === deployIndex) {
+                  console.log(showcase);
                   firestore
-                    .collection("courses")
-                    .where("title", "==", courseName)
-                    .get()
-                    .then((querySnapshot) => {
-                      querySnapshot.forEach((document) => {
-                        document.ref.update({
-                          preview_channels: previewcollectionId,
-                        });
-                      });
-                    });
+                    .collection("showcases")
+                    .doc(courseName)
+                    .set(showcase, { merge: true });
                   //delete the github folder
                   fs.rmSync(coursefolderName, { recursive: true, force: true });
                   resolve("last index deployed successfully");
@@ -428,20 +449,16 @@ exports.delete_one_channel = functions.https.onRequest((req, res) => {
 });
 
 async function delete_showcase_local(courseName) {
-  //first get the preview collection id
-  const previewcollectionId = (
-    await firestore.collection("courses").where("title", "==", courseName).get()
-  ).docs[0].data().preview_channels;
-  console.log(previewcollectionId);
-  // .then((querySnapshot) => {
-  //   previewcollectionId = querySnapshot[0];
-  //   console.log(previewcollectionId); //.getString("preview_channels");
-  // });
   const lessons = (
-    await firestore.collection(previewcollectionId).get()
-  ).docs.map((doc) => doc.data());
+    await firestore.collection("showcases").doc(courseName).get()
+  ).data().subchannels;
+  console.log(lessons);
   let tokena = "";
   return new Promise((resolve, reject) => {
+    if (lessons === undefined) {
+      resolve(courseName + " does not have subchannels");
+      return;
+    }
     getAccessToken()
       .then((token) => {
         tokena = token;
@@ -471,25 +488,10 @@ async function delete_showcase_local(courseName) {
       })
       .then((allVersionPromise) => {
         console.log(allVersionPromise);
-        //should get 10 items here
         //delete all documents from firebase
-        const ref = firestore.collection(previewcollectionId);
-        ref.onSnapshot((snapshot) => {
-          snapshot.docs.forEach((doc) => {
-            ref.doc(doc.id).delete();
-          });
+        firestore.collection("showcases").doc(courseName).update({
+          subchannels: FieldValue.delete(),
         });
-        firestore
-          .collection("courses")
-          .where("title", "==", courseName)
-          .get()
-          .then((querySnapshot) => {
-            querySnapshot.forEach((document) => {
-              document.ref.update({
-                preview_channels: FieldValue.delete(),
-              });
-            });
-          });
         ///all documents deleted
         resolve("all documents deleted successfully");
       });
