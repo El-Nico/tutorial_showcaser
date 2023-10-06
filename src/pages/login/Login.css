@@ -1,0 +1,28 @@
+.login-page main{
+    height: 100vh;
+    display: grid;
+    place-content: center;
+}
+
+.login-page section{
+    text-align: center;
+}
+
+.login-page section p{
+    margin-bottom: 1rem;
+}
+
+.login-page input{
+    padding: 1rem;
+    display: block;
+    margin: 0.2rem;
+}
+
+.login-page label{
+    text-align: left;
+    display: block;
+}
+
+.login-page .form-control{
+    margin-bottom: 1rem;
+}
