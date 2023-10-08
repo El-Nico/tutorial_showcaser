@@ -5,6 +5,7 @@ import { Home } from "./pages/home/Home";
 import { Login } from "./pages/login/Login";
 import { Provider } from "react-redux";
 import { store } from "./store";
+import { About } from "./pages/about/About";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/home" element={<Home />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/about" element={<About />} />
             </Routes>
           </section>
         </div>

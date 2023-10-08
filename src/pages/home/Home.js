@@ -1,12 +1,13 @@
 import "./Home.css";
 import { useState, useEffect, useReducer } from "react";
 import { getShowcases } from "../../utilities/firestore-crud";
-import { getReadmez } from "../../utilities/github-api";
+import { OWNER, getReadmez, getRepoContents } from "../../utilities/github-api";
 import MDEditor from "@uiw/react-md-editor";
 import { useDispatch, useSelector } from "react-redux";
 import { selectUser, setUser } from "../../store";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../firebase";
+import { NavLink } from "react-router-dom";
 
 //react state management 59:54 unneseaary pairing of useffect and usestate should be avoid
 //ded
@@ -33,6 +34,21 @@ export function Home() {
             ...state,
             mdSource: action.payload,
           };
+        case "SET_SUBCHANNELS":
+          return {
+            ...state,
+            subchannels: action.payload,
+          };
+        case "SET_EDIT_MODE":
+          return {
+            ...state,
+            editMode: action.payload,
+          };
+        case "SET_LOGIN_STATUS":
+          return {
+            ...state,
+            isLoggedIn: action.payload,
+          };
       }
     },
     {
@@ -41,7 +57,10 @@ export function Home() {
         title: "example",
         previewUrl: "http://example.com/",
       },
+      subchannels: [{ channel_url: "http://example.com" }],
       mdSource: "# Example",
+      editMode: false,
+      isLoggedIn: false,
     }
   );
 
@@ -58,13 +77,21 @@ export function Home() {
         // https://firebase.google.com/docs/reference/js/firebase.User
         const uid = user.uid;
         // ...
-        console.log("uid", uid);
-        r_dispatch(setUser(user));
+        // console.log("uid", uid);
+        r_dispatch(setUser(true));
+        dispatch({
+          type: "SET_LOGIN_STATUS",
+          payload: true,
+        });
       } else {
         // User is signed out
         // ...
-        console.log("user is logged out");
-        r_dispatch(setUser(""));
+        // console.log("user is logged out");
+        r_dispatch(setUser(false));
+        dispatch({
+          type: "SET_LOGIN_STATUS",
+          payload: false,
+        });
       }
     });
   }, []);
@@ -72,18 +99,32 @@ export function Home() {
   //get all showcases
   useEffect(() => {
     getShowcases().then((showcases) => {
-      console.log(showcases);
       dispatch({
         type: "SET_SELECTED_AND_ALL_SHOWCASES",
         payload: { showcases: showcases, selectedShowcase: showcases[0] },
       });
+
+      ///get list of showcases for selected showcase
+      const current = state.selectedShowcase;
+      if (current.hasSubchannels) {
+        getRepoContents(OWNER, current.id, "").then((repoContents) => {
+          console.log(repoContents);
+          const subchannels = repoContents.data.filter(
+            (content) => !content.name.endsWith(".md")
+          );
+          dispatch({
+            type: "SET_SUBCHANNELS",
+            payload: subchannels,
+          });
+        });
+      }
     });
 
     //github stuff
     getReadmez("react_state_management", "/README.md", "El-Nico").then(
       (res) => {
         let source = window.atob(res.data.content);
-        console.log(source);
+        // console.log(source);
         dispatch({
           type: "SET_MDSOURCE",
           payload: source,
@@ -91,7 +132,7 @@ export function Home() {
       }
     );
   }, []);
-
+  console.log("editmode", state.editMode);
   return (
     <div className="App">
       <header className="header el">
@@ -117,12 +158,44 @@ export function Home() {
           <span className="custom-arrow"></span>
         </div>
         <h1 className="logo">tutorial showcaser</h1>
-        <h3>About</h3>
+        <h3>
+          <NavLink to="/about">About</NavLink>
+        </h3>
       </header>
       <main className="container">
         <div className="scroll">
-          <div className="box about-box">
-            <h1>About</h1>
+          {/* toggle switch only available when logged in */}
+          {state.isLoggedIn === true && (
+            <label className="switch">
+              <input
+                type="checkbox"
+                onClick={() => {
+                  dispatch({
+                    type: "SET_EDIT_MODE",
+                    payload: state.editMode === false ? true : false,
+                  });
+                }}
+              />
+              <span class="slider round"></span>
+            </label>
+          )}
+          <div className="box" id="about-box">
+            {/* <MarkdownPreview source={state.mdSource} /> */}
+            {state.editMode === false && (
+              <MDEditor.Markdown source={state.mdSource} />
+            )}
+            {state.editMode === true && (
+              <MDEditor
+                height={"100%"}
+                value={state.mdSource}
+                onChange={(e) => {
+                  dispatch({
+                    type: "SET_MDSOURCE",
+                    payload: e,
+                  });
+                }}
+              />
+            )}
           </div>
           <div className="box box2">
             <iframe
@@ -132,36 +205,26 @@ export function Home() {
               height={"100%"}
             ></iframe>
           </div>
-          <div className="box box3">
-            {/* <MarkdownPreview source={state.mdSource} /> */}
-            {/* <MDEditor.Markdown source={state.mdSource} /> */}
-            {/* <MDEditor
-              height={"100%"}
-              value={state.mdSource}
-              onChange={(e) => {
-                dispatch({
-                  type: "SET_MDSOURCE",
-                  payload: e,
-                });
-              }}
-            /> */}
-            {/* <div className="suc">
-              {isLoggedIn}hhh{isLoggedIn}hhh
-            </div> */}
-            {isLoggedIn && <div className="suc">pussy</div>}
-          </div>
+          <div className="box box3"></div>
         </div>
       </main>
       <aside className="sidebar el">
-        {lessons.map((lesson) => (
-          <button
-            onClick={(_) => {
-              updateSelectLesson({ ...lesson });
-            }}
-          >
-            {lesson.lessonName}
-          </button>
-        ))}
+        <div className="home-subchannels">
+          <button>About the Project</button>
+          {state.subchannels.map((subchannel) => (
+            <button
+              onClick={(_) => {
+                updateSelectLesson({ ...lesson });
+              }}
+            >
+              {subchannel.name}
+            </button>
+          ))}
+          <button>About this Section</button>
+        </div>
+        {/* <div className="home-showcase-readme">
+          <NavLink to="/home#about-box">Readme.md</NavLink>
+        </div> */}
       </aside>
 
       <footer className="footer el">

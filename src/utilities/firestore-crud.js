@@ -5,8 +5,10 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  setDoc,
   updateDoc,
 } from "firebase/firestore";
+import { OWNER, getRepoContents } from "./github-api";
 
 ////////////////////////////////////testing db//////////////////////////////////
 //create states
@@ -24,7 +26,6 @@ import {
 //   }, []);
 
 //collection references
-const coursesCollectionRef = collection(db, "courses");
 const showcasesCollectionRef = collection(db, "showcases");
 
 const getData = async (ref) => {
@@ -40,14 +41,6 @@ export const getShowcases = async () => {
   const data = await getDocs(showcasesCollectionRef);
   showcases = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
   return showcases;
-};
-
-//// get courses
-export const getCourses = async () => {
-  let courses = [];
-  const data = await getDocs(coursesCollectionRef);
-  courses = data.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
-  return courses;
 };
 
 //// get Lessons with coursename

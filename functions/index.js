@@ -109,14 +109,15 @@ async function refresh_all_showcases_local() {
   });
   console.log(courses);
   //first of all delete all
-  const delAllCourseShowcaseArr = courses.reduce(
-    (delPromiseArr, currentCourse) => {
-      delPromiseArr.push(delete_showcase_local(currentCourse.title));
-      return delPromiseArr;
-    },
-    []
-  );
-  const deletedAll = await Promise.all(delAllCourseShowcaseArr);
+  // const delAllCourseShowcaseArr = courses.reduce(
+  //   (delPromiseArr, currentCourse) => {
+  //     delPromiseArr.push(delete_showcase_local(currentCourse.title));
+  //     return delPromiseArr;
+  //   },
+  //   []
+  // );
+  // const deletedAll = await Promise.all(delAllCourseShowcaseArr);
+  const deletedAll = await delete_all_preview_channels_local();
   console.log(deletedAll);
 
   //then generate all
@@ -516,22 +517,30 @@ exports.delete_showcase = onRequest(
 ///list and delete all channels method
 exports.delete_all_preview_channels = functions.https.onRequest((req, res) => {
   // http://127.0.0.1:5001/tutorial-showcaser/us-central1/delete_all_preview_channels
-  getAccessToken().then((token) => {
-    listPreviewChannels(MY_APP.SITE_ID, token)
-      .then((channelList) => {
-        const deletePromises = channelList.channels
-          .filter((channel) => channel.name.split("/")[3] !== MY_APP.SITE_ID)
-          .map((channel) => {
-            console.log(channel);
-            const channelId = channel.name.split("/")[3];
-            return deletePreviewChannel(MY_APP.SITE_ID, token, channelId);
-          });
-        return Promise.all(deletePromises);
-      })
-      .then((allDeletedChannels) => {
-        console.log(allDeletedChannels);
-        res.json(allDeletedChannels);
-      });
+  delete_all_preview_channels_local().then((allDeletedChannels) => {
+    res.json(allDeletedChannels);
   });
 });
+
+function delete_all_preview_channels_local() {
+  return new Promise((resolve, reject) => {
+    getAccessToken().then((token) => {
+      listPreviewChannels(MY_APP.SITE_ID, token)
+        .then((channelList) => {
+          const deletePromises = channelList.channels
+            .filter((channel) => channel.name.split("/")[3] !== "live")
+            .map((channel) => {
+              console.log(channel);
+              const channelId = channel.name.split("/")[3];
+              return deletePreviewChannel(MY_APP.SITE_ID, token, channelId);
+            });
+          return Promise.all(deletePromises);
+        })
+        .then((allDeletedChannels) => {
+          console.log(allDeletedChannels);
+          resolve(allDeletedChannels);
+        });
+    });
+  });
+}
 //////////////////////////end of the begging of the end/////////////////////
