@@ -49,6 +49,11 @@ export function Home() {
             ...state,
             isLoggedIn: action.payload,
           };
+        case "SET_IFRAME":
+          return {
+            ...state,
+            iFrame: action.payload,
+          };
       }
     },
     {
@@ -61,6 +66,10 @@ export function Home() {
       mdSource: "# Example",
       editMode: false,
       isLoggedIn: false,
+      iFrame: {
+        title: "example",
+        url: "http://example.com/",
+      },
     }
   );
 
@@ -96,6 +105,7 @@ export function Home() {
     });
   }, []);
 
+  console.log(state.selectedShowcase);
   //get all showcases
   useEffect(() => {
     getShowcases().then((showcases) => {
@@ -105,7 +115,9 @@ export function Home() {
       });
 
       ///get list of showcases for selected showcase
-      const current = state.selectedShowcase;
+      // const current = state.selectedShowcase;
+      const current = showcases[0];
+      console.log("inside", state.selectedShowcase);
       if (current.hasSubchannels) {
         getRepoContents(OWNER, current.id, "").then((repoContents) => {
           console.log(repoContents);
@@ -132,21 +144,81 @@ export function Home() {
       }
     );
   }, []);
-  console.log("editmode", state.editMode);
+
+  function changeShowcase(e) {
+    console.log(e.target.value);
+    const selectedShowcase = state.showcases.find(
+      (showcase) => showcase.title === e.target.value
+    );
+    dispatch({
+      type: "SET_SELECTED_SHOWCASE",
+      payload: selectedShowcase,
+    });
+
+    let subchannels = [];
+    if (selectedShowcase.previewUrl) {
+      subchannels.push({
+        mainPreview: true,
+        name: "Main Preview",
+        url: selectedShowcase.previewUrl,
+      });
+    }
+    if (
+      selectedShowcase.hasSubchannels &&
+      selectedShowcase.hasSubchannels === true
+    ) {
+      getRepoContents(OWNER, selectedShowcase.id, "").then((repoContents) => {
+        console.log(repoContents);
+        const subs = repoContents.data.filter(
+          (content) => !content.name.endsWith(".md")
+        );
+        subchannels.push(...subs);
+        dispatch({
+          type: "SET_SUBCHANNELS",
+          payload: subchannels,
+        });
+      });
+    } else {
+      dispatch({
+        type: "SET_SUBCHANNELS",
+        payload: subchannels,
+      });
+    }
+  }
+
+  function changePreview(subchannel) {
+    console.log("whateeven", subchannel);
+    if (subchannel.mainPreview) {
+      dispatch({
+        type: "SET_IFRAME",
+        payload: { title: subchannel.name, url: subchannel.url },
+      });
+    } else {
+      const currentPreview = state.selectedShowcase.subchannels.find(
+        (subch) => subch.lessonName === subchannel.name
+      );
+      console.log("daewg", {
+        title: currentPreview.lessonName,
+        url: currentPreview.channel_url,
+      });
+      dispatch({
+        type: "SET_IFRAME",
+        payload: {
+          title: currentPreview.lessonName,
+          url: currentPreview.channel_url,
+        },
+      });
+    }
+  }
+
   return (
     <div className="App">
       <header className="header el">
         <div className="custom-select">
           <select
-            value={state.showcases[0].title}
+            value={state.selectedShowcase.title}
             onChange={(e) => {
-              const selectedShowcase = state.showcases.find(
-                (showcase) => showcase.title === e.target.value
-              );
-              dispatch({
-                type: "SET_SELECTED_SHOWCASE",
-                payload: selectedShowcase,
-              });
+              changeShowcase(e);
             }}
           >
             {state.showcases.map((showcase) => (
@@ -176,7 +248,7 @@ export function Home() {
                   });
                 }}
               />
-              <span class="slider round"></span>
+              <span className="slider round"></span>
             </label>
           )}
           <div className="box" id="about-box">
@@ -199,8 +271,8 @@ export function Home() {
           </div>
           <div className="box box2">
             <iframe
-              src={state.selectedShowcase.previewUrl}
-              title={state.selectedShowcase.title}
+              src={state.iFrame.url}
+              title={state.iFrame.title}
               width={"100%"}
               height={"100%"}
             ></iframe>
@@ -211,10 +283,11 @@ export function Home() {
       <aside className="sidebar el">
         <div className="home-subchannels">
           <button>About the Project</button>
-          {state.subchannels.map((subchannel) => (
+          {state.subchannels.map((subchannel, i) => (
             <button
+              key={i}
               onClick={(_) => {
-                updateSelectLesson({ ...lesson });
+                changePreview(subchannel);
               }}
             >
               {subchannel.name}
