@@ -8,7 +8,6 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import { OWNER, getRepoContents } from "./github-api";
 
 ////////////////////////////////////testing db//////////////////////////////////
 //create states

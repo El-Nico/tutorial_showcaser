@@ -1,7 +1,13 @@
 import "./Home.css";
 import { useState, useEffect, useReducer } from "react";
 import { getShowcases } from "../../utilities/firestore-crud";
-import { OWNER, getReadmez, getRepoContents } from "../../utilities/github-api";
+import {
+  OWNER,
+  create_update_file,
+  getReadme,
+  getReadmez,
+  getRepoContents,
+} from "../../utilities/github-api";
 import MDEditor from "@uiw/react-md-editor";
 import { useDispatch, useSelector } from "react-redux";
 import { selectUser, setUser } from "../../store";
@@ -13,9 +19,6 @@ import { NavLink } from "react-router-dom";
 //ded
 
 export function Home() {
-  const [lessons, updateLessons] = useState([]);
-  const [selectLesson, updateSelectLesson] = useState({});
-
   const [state, dispatch] = useReducer(
     (state, action) => {
       switch (action.type) {
@@ -33,6 +36,11 @@ export function Home() {
           return {
             ...state,
             mdSource: action.payload,
+          };
+        case "SET_MDSOURCE_SUBCHANNEL":
+          return {
+            ...state,
+            mdSourceSubchannel: action.payload,
           };
         case "SET_SUBCHANNELS":
           return {
@@ -63,7 +71,8 @@ export function Home() {
         previewUrl: "http://example.com/",
       },
       subchannels: [{ channel_url: "http://example.com" }],
-      mdSource: "# Example",
+      mdSource: { url: "https://github.com/", markup: "# Example" },
+      mdSourceSubchannel: { url: "https://github.com/", markup: "# Example" },
       editMode: false,
       isLoggedIn: false,
       iFrame: {
@@ -73,9 +82,8 @@ export function Home() {
     }
   );
 
-  let isLoggedIn = useSelector(selectUser);
+  // let isLoggedIn = useSelector(selectUser);
   // let isLoggedIn = false;
-  console.log(isLoggedIn);
 
   //user observable
   const r_dispatch = useDispatch();
@@ -105,7 +113,6 @@ export function Home() {
     });
   }, []);
 
-  console.log(state.selectedShowcase);
   //get all showcases
   useEffect(() => {
     getShowcases().then((showcases) => {
@@ -117,10 +124,8 @@ export function Home() {
       ///get list of showcases for selected showcase
       // const current = state.selectedShowcase;
       const current = showcases[0];
-      console.log("inside", state.selectedShowcase);
       if (current.hasSubchannels) {
         getRepoContents(OWNER, current.id, "").then((repoContents) => {
-          console.log(repoContents);
           const subchannels = repoContents.data.filter(
             (content) => !content.name.endsWith(".md")
           );
@@ -130,20 +135,37 @@ export function Home() {
           });
         });
       }
-    });
 
-    //github stuff
-    getReadmez("react_state_management", "/README.md", "El-Nico").then(
-      (res) => {
+      getReadme(OWNER, current.id, "").then((res) => {
         let source = window.atob(res.data.content);
         // console.log(source);
         dispatch({
           type: "SET_MDSOURCE",
-          payload: source,
+          payload: { url: current.id, markup: source },
         });
-      }
-    );
+
+        // console.log(res);
+        ///////////////testhere////////////////
+        // const content = window.btoa("new stuffs4");
+        // const sha = res.data.sha;
+        // create_update_file(
+        //   OWNER,
+        //   "css_tutorials",
+        //   "README.MD",
+        //   "testing programmatic commit4",
+        //   { name: "Nicholas Eruba", email: "nicholasc1665@yahoo.com" },
+        //   content,
+        //   sha
+        // ).then((res) => {
+        //   console.log(res);
+        // });
+      });
+    });
   }, []);
+
+  //css_tutorials/01_lesson/README.md
+  //css_tutorials/02_lesson/readme.md
+  //css_tutorials/03_lesson_css_colors/lesson.md
 
   function changeShowcase(e) {
     console.log(e.target.value);
@@ -153,6 +175,15 @@ export function Home() {
     dispatch({
       type: "SET_SELECTED_SHOWCASE",
       payload: selectedShowcase,
+    });
+
+    getReadme(OWNER, selectedShowcase.id, "").then((res) => {
+      let source = window.atob(res.data.content);
+      // console.log(source);
+      dispatch({
+        type: "SET_MDSOURCE",
+        payload: { url: selectedShowcase.id, markup: source },
+      });
     });
 
     let subchannels = [];
@@ -168,7 +199,6 @@ export function Home() {
       selectedShowcase.hasSubchannels === true
     ) {
       getRepoContents(OWNER, selectedShowcase.id, "").then((repoContents) => {
-        console.log(repoContents);
         const subs = repoContents.data.filter(
           (content) => !content.name.endsWith(".md")
         );
@@ -187,7 +217,6 @@ export function Home() {
   }
 
   function changePreview(subchannel) {
-    console.log("whateeven", subchannel);
     if (subchannel.mainPreview) {
       dispatch({
         type: "SET_IFRAME",
@@ -197,10 +226,7 @@ export function Home() {
       const currentPreview = state.selectedShowcase.subchannels.find(
         (subch) => subch.lessonName === subchannel.name
       );
-      console.log("daewg", {
-        title: currentPreview.lessonName,
-        url: currentPreview.channel_url,
-      });
+
       dispatch({
         type: "SET_IFRAME",
         payload: {
@@ -209,6 +235,19 @@ export function Home() {
         },
       });
     }
+
+    getReadme(OWNER, state.selectedShowcase.id, subchannel.name).then((res) => {
+      let source = window.atob(res.data.content);
+      // console.log(source);
+      dispatch({
+        type: "SET_MDSOURCE_SUBCHANNEL",
+        payload: { url: subchannel.name, markup: source },
+      });
+    });
+  }
+
+  function updateReadme(x) {
+    console.log(x);
   }
 
   return (
@@ -254,19 +293,28 @@ export function Home() {
           <div className="box" id="about-box">
             {/* <MarkdownPreview source={state.mdSource} /> */}
             {state.editMode === false && (
-              <MDEditor.Markdown source={state.mdSource} />
+              <MDEditor.Markdown source={state.mdSource.markup} />
             )}
             {state.editMode === true && (
-              <MDEditor
-                height={"100%"}
-                value={state.mdSource}
-                onChange={(e) => {
-                  dispatch({
-                    type: "SET_MDSOURCE",
-                    payload: e,
-                  });
-                }}
-              />
+              <>
+                <MDEditor
+                  height={"100%"}
+                  value={state.mdSource.markup}
+                  onChange={(e) => {
+                    dispatch({
+                      type: "SET_MDSOURCE",
+                      payload: { url: state.mdSource.url, markup: e },
+                    });
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    updateReadme(state.mdSource.url);
+                  }}
+                >
+                  done
+                </button>
+              </>
             )}
           </div>
           <div className="box box2">
@@ -277,7 +325,33 @@ export function Home() {
               height={"100%"}
             ></iframe>
           </div>
-          <div className="box box3"></div>
+          <div className="box box3">
+            {/* <MarkdownPreview source={state.mdSource} /> */}
+            {state.editMode === false && (
+              <MDEditor.Markdown source={state.mdSourceSubchannel.markup} />
+            )}
+            {state.editMode === true && (
+              <>
+                <MDEditor
+                  height={"100%"}
+                  value={state.mdSourceSubchannel.markup}
+                  onChange={(e) => {
+                    dispatch({
+                      type: "SET_MDSOURCE_SUBCHANNEL",
+                      payload: { url: state.mdSourceSubchannel.url, markup: e },
+                    });
+                  }}
+                />
+                <button
+                  onClick={() => {
+                    updateReadme(state.mdSourceSubchannel.url);
+                  }}
+                >
+                  done
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </main>
       <aside className="sidebar el">
