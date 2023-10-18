@@ -5,37 +5,37 @@
     box-sizing: border-box;
 }
 
-.App {
+.home {
     font-family: "Roboto", sans-serif;
-    min-height: 100vh;
+    height: 100vh;
     display: grid;
     grid-template-columns: repeat(9, 1fr);
     grid-auto-rows: 50px auto 50px;
     grid-template-areas: "hd hd hd hd hd hd hd hd hd" "sb sb mn mn mn mn mn mn mn " "ft ft ft ft ft ft ft ft ft";
     gap: 0.5rem;
-    /* background: #4d5061; */
-    /* padding: 0.5rem; */
 }
 
-.el {
-    background-color: #242443;
-    color: #fff;
-    display: grid;
-    place-content: center;
-}
+
 
 .header {
-    grid-area: hd;
+     grid-area: hd;
+     background: var(--main-colour);
+     color: #fff;
+     text-align: center;
+     display: grid; 
+     padding-inline: 1rem;
+}
+.header .element-container{
     display: flex;
-    justify-content: space-between;
+   
+    align-content: center;
     align-items: center;
-    padding: 15px 20px;
-    /* margin-right: 0.5rem; */
+    justify-content: space-between;
+    
 }
 
-.footer {
-    grid-area: ft;
-}
+
+
 
 .container {
     grid-area: mn;
@@ -82,6 +82,7 @@ select {
 
 .custom-select {
     position: relative;
+    justify-self: start;
 }
 
 .custom-arrow {
@@ -126,25 +127,18 @@ select {
 /* end of custom select */
 
 
-/* .about {
-    background: #4d5061;
-    border-radius: 25px;
-    width: 237.35px;
-    text-align: center;
-    cursor: pointer;
-} */
 
-.about>h1 {
-    font-size: 1rem;
-    /* align-self: flex-end; */
+
+.header .element-container .nav-about {
+    /* justify-self: end; */
 }
 
-.about>h1:hover {
+.nav-about:hover {
     background: #4d5061;
     cursor: pointer;
 }
 
-.logo {
+.nav-logo {
     color: orange;
 }
 
@@ -308,6 +302,41 @@ button:hover{
     border-radius: 50%;
   } 
 
+
+  .footer {
+    grid-area: ft;
+    background: var(--main-colour);
+    color: #fff;
+    display: grid;
+    grid-template-columns: 2fr 7fr;
+}
+
+.footer a{
+    color: #fff;
+}
+
+.footer .socials{
+    background:#4d5061;
+    display: flex;
+    padding-inline: 1rem;
+
+}
+
+.footer .socials .social-icon{
+    height: 100%;
+    width: 25px;
+    display: grid;
+    place-content: center;
+    margin-right: 0.2rem;
+    color: #3b3c47;
+}
+
+.footer .socials .social-icon>*{
+    height: 25px;
+    width: 25px;
+    /* place-self: center; */
+}
+ 
 
 
 

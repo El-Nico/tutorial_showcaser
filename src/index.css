@@ -11,3 +11,14 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+:root {
+  --website-width:1250px;
+  --main-colour: #242443;
+  --icon-width: 28px;
+}
+
+/* debug mode */
+div{
+  /* border: 1px red solid; */
+}

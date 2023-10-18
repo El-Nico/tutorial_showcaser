@@ -12,7 +12,7 @@ function App() {
     <Provider store={store}>
       <Router>
         <div>
-          <section>
+          <main>
             <Routes>
               {" "}
               <Route path="/" element={<Home />} />
@@ -20,7 +20,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/about" element={<About />} />
             </Routes>
-          </section>
+          </main>
         </div>
       </Router>
     </Provider>

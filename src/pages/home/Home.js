@@ -14,6 +14,7 @@ import { selectUser, setUser } from "../../store";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../../firebase";
 import { NavLink } from "react-router-dom";
+import { FaGithub, FaLinkedin } from "react-icons/fa";
 
 //react state management 59:54 unneseaary pairing of useffect and usestate should be avoid
 //ded
@@ -251,27 +252,31 @@ export function Home() {
   }
 
   return (
-    <div className="App">
-      <header className="header el">
-        <div className="custom-select">
-          <select
-            value={state.selectedShowcase.title}
-            onChange={(e) => {
-              changeShowcase(e);
-            }}
-          >
-            {state.showcases.map((showcase) => (
-              <option key={showcase.title} value={showcase.title}>
-                {showcase.title}
-              </option>
-            ))}
-          </select>
-          <span className="custom-arrow"></span>
+    <div className="home">
+      <header className="header">
+        <div className="element-container">
+          <div className="custom-select">
+            <select
+              value={state.selectedShowcase.title}
+              onChange={(e) => {
+                changeShowcase(e);
+              }}
+            >
+              {state.showcases.map((showcase) => (
+                <option key={showcase.title} value={showcase.title}>
+                  {showcase.title}
+                </option>
+              ))}
+            </select>
+            <span className="custom-arrow"></span>
+          </div>
+          <div className="nav-logo">
+            <h1>Project Showcaser</h1>
+          </div>
+          <div className="nav-about">
+            <h3>About</h3>
+          </div>
         </div>
-        <h1 className="logo">tutorial showcaser</h1>
-        <h3>
-          <NavLink to="/about">About</NavLink>
-        </h3>
       </header>
       <main className="container">
         <div className="scroll">
@@ -374,8 +379,24 @@ export function Home() {
         </div> */}
       </aside>
 
-      <footer className="footer el">
-        <h2>Footer</h2>
+      <footer className="footer">
+        <div className="socials">
+          <div className="social-icon">
+            <FaGithub></FaGithub>
+          </div>
+          <div className="social-icon">
+            <FaLinkedin></FaLinkedin>
+          </div>
+        </div>
+        <div className="copy">
+          <p>
+            copyright &copy; 2023{" "}
+            <a href="https://nicholas-eruba.com/home" target="_blank">
+              Nicholas Chibuike-Eruba
+            </a>
+            &nbsp; All rights reserved
+          </p>
+        </div>
       </footer>
     </div>
   );
