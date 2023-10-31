@@ -10,11 +10,16 @@ import {
 } from "../../utilities/github-api";
 import MDEditor from "@uiw/react-md-editor";
 import { useDispatch, useSelector } from "react-redux";
-import { selectUser, setUser } from "../../store";
 import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "../../firebase";
+
 import { NavLink } from "react-router-dom";
 import { FaGithub, FaLinkedin } from "react-icons/fa";
+import { setLoginState } from "../../redux/store";
+import { auth } from "../../firebase";
+import { Header } from "./shared/header/Header";
+import Footer from "./shared/footer/Footer";
+import Sidebar from "./sidebar/Sidebar";
+import Main from "./main/Main";
 
 //react state management 59:54 unneseaary pairing of useffect and usestate should be avoid
 //ded
@@ -53,11 +58,6 @@ export function Home() {
             ...state,
             editMode: action.payload,
           };
-        case "SET_LOGIN_STATUS":
-          return {
-            ...state,
-            isLoggedIn: action.payload,
-          };
         case "SET_IFRAME":
           return {
             ...state,
@@ -75,7 +75,6 @@ export function Home() {
       mdSource: { url: "https://github.com/", markup: "# Example" },
       mdSourceSubchannel: { url: "https://github.com/", markup: "# Example" },
       editMode: false,
-      isLoggedIn: false,
       iFrame: {
         title: "example",
         url: "http://example.com/",
@@ -83,36 +82,11 @@ export function Home() {
     }
   );
 
-  // let isLoggedIn = useSelector(selectUser);
+  const isLoggedIn = useSelector((state) => state.applicationState.isLoggedIn);
   // let isLoggedIn = false;
 
-  //user observable
-  const r_dispatch = useDispatch();
-  useEffect(() => {
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // User is signed in, see docs for a list of available properties
-        // https://firebase.google.com/docs/reference/js/firebase.User
-        const uid = user.uid;
-        // ...
-        // console.log("uid", uid);
-        r_dispatch(setUser(true));
-        dispatch({
-          type: "SET_LOGIN_STATUS",
-          payload: true,
-        });
-      } else {
-        // User is signed out
-        // ...
-        // console.log("user is logged out");
-        r_dispatch(setUser(false));
-        dispatch({
-          type: "SET_LOGIN_STATUS",
-          payload: false,
-        });
-      }
-    });
-  }, []);
+  const showcaseState = useSelector((state) => state.showcases);
+  // console.log(showcaseState);
 
   //get all showcases
   useEffect(() => {
@@ -247,157 +221,12 @@ export function Home() {
     });
   }
 
-  function updateReadme(x) {
-    console.log(x);
-  }
-
   return (
     <div className="home">
-      <header className="header">
-        <div className="element-container">
-          <div className="custom-select">
-            <select
-              value={state.selectedShowcase.title}
-              onChange={(e) => {
-                changeShowcase(e);
-              }}
-            >
-              {state.showcases.map((showcase) => (
-                <option key={showcase.title} value={showcase.title}>
-                  {showcase.title}
-                </option>
-              ))}
-            </select>
-            <span className="custom-arrow"></span>
-          </div>
-          <div className="nav-logo">
-            <h1>Project Showcaser</h1>
-          </div>
-          <div className="nav-about">
-            <h3>About</h3>
-          </div>
-        </div>
-      </header>
-      <main className="container">
-        <div className="scroll">
-          {/* toggle switch only available when logged in */}
-          {state.isLoggedIn === true && (
-            <label className="switch">
-              <input
-                type="checkbox"
-                onClick={() => {
-                  dispatch({
-                    type: "SET_EDIT_MODE",
-                    payload: state.editMode === false ? true : false,
-                  });
-                }}
-              />
-              <span className="slider round"></span>
-            </label>
-          )}
-          <div className="box" id="about-box">
-            {/* <MarkdownPreview source={state.mdSource} /> */}
-            {state.editMode === false && (
-              <MDEditor.Markdown source={state.mdSource.markup} />
-            )}
-            {state.editMode === true && (
-              <>
-                <MDEditor
-                  height={"100%"}
-                  value={state.mdSource.markup}
-                  onChange={(e) => {
-                    dispatch({
-                      type: "SET_MDSOURCE",
-                      payload: { url: state.mdSource.url, markup: e },
-                    });
-                  }}
-                />
-                <button
-                  onClick={() => {
-                    updateReadme(state.mdSource.url);
-                  }}
-                >
-                  done
-                </button>
-              </>
-            )}
-          </div>
-          <div className="box box2">
-            <iframe
-              src={state.iFrame.url}
-              title={state.iFrame.title}
-              width={"100%"}
-              height={"100%"}
-            ></iframe>
-          </div>
-          <div className="box box3">
-            {/* <MarkdownPreview source={state.mdSource} /> */}
-            {state.editMode === false && (
-              <MDEditor.Markdown source={state.mdSourceSubchannel.markup} />
-            )}
-            {state.editMode === true && (
-              <>
-                <MDEditor
-                  height={"100%"}
-                  value={state.mdSourceSubchannel.markup}
-                  onChange={(e) => {
-                    dispatch({
-                      type: "SET_MDSOURCE_SUBCHANNEL",
-                      payload: { url: state.mdSourceSubchannel.url, markup: e },
-                    });
-                  }}
-                />
-                <button
-                  onClick={() => {
-                    updateReadme(state.mdSourceSubchannel.url);
-                  }}
-                >
-                  done
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-      </main>
-      <aside className="sidebar el">
-        <div className="home-subchannels">
-          <button>About the Project</button>
-          {state.subchannels.map((subchannel, i) => (
-            <button
-              key={i}
-              onClick={(_) => {
-                changePreview(subchannel);
-              }}
-            >
-              {subchannel.name}
-            </button>
-          ))}
-          <button>About this Section</button>
-        </div>
-        {/* <div className="home-showcase-readme">
-          <NavLink to="/home#about-box">Readme.md</NavLink>
-        </div> */}
-      </aside>
-
-      <footer className="footer">
-        <div className="socials">
-          <div className="social-icon">
-            <FaGithub></FaGithub>
-          </div>
-          <div className="social-icon">
-            <FaLinkedin></FaLinkedin>
-          </div>
-        </div>
-        <div className="copy">
-          <p>
-            copyright &copy; 2023{" "}
-            <a href="https://nicholas-eruba.com/home" target="_blank">
-              Nicholas Chibuike-Eruba
-            </a>
-            &nbsp; All rights reserved
-          </p>
-        </div>
-      </footer>
+      <Header showSelect={true} />
+      <Main />
+      <Sidebar />
+      <Footer />
     </div>
   );
 }

@@ -1,0 +1,17 @@
+#Sidebar {
+    grid-area: sb;
+    background-color: #242443;
+    /* height: 100vh; */
+    place-content: start;
+    display: flex;
+    flex-direction: column;
+   /* place-content: center; */
+}
+
+.sidebar-active{
+    background-color: orange;
+}
+
+#Sidebar button{
+    border-bottom:1px solid #4d5061;
+}

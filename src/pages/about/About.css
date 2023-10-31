@@ -1,0 +1,17 @@
+#About{
+    /* font-family: "Roboto", sans-serif; */
+    
+    display: grid;
+    height: 100vh;
+    /* grid-template-columns: 1fr; */
+    grid-auto-rows: 50px auto 50px;
+    grid-template-areas: "hd hd hd hd hd hd hd hd hd" "mn mn mn mn mn mn mn mn mn " "ft ft ft ft ft ft ft ft ft";
+    gap: 0.5rem;
+}
+
+#About main{
+    text-align: center;
+    grid-area: mn;
+display: grid;
+place-content: center;
+}

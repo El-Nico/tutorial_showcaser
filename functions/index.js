@@ -225,8 +225,6 @@ function deleteAllExceptFolder(src, folder) {
 
 function buildFiles(courseDir, hos) {
   return new Promise((resolve, reject) => {
-    //DELETE README HERE FOR NOW
-    fs.rmSync(courseDir + "/" + "README.md", { recursive: true, force: true });
     const files = fs.readdirSync(courseDir);
     // console.log(files);
     let cFiles = {};
@@ -235,6 +233,11 @@ function buildFiles(courseDir, hos) {
       //first  layer
       // console.log("FILE 11111111111");
       readDir = courseDir + "/" + dir;
+      if (dir.toLowerCase() === "readme.md") {
+        //DELETE README HERE FOR NOW
+        fs.rmSync(readDir, { recursive: true, force: true });
+        return;
+      }
       const subFiles = fs.readdirSync(readDir);
       const cFilesTemp = [];
       let publicFolder = readDir;

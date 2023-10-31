@@ -9,21 +9,6 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-////////////////////////////////////testing db//////////////////////////////////
-//create states
-//   const [newName, setNewName] = useState("");
-//   const [newAge, setNewAge] = useState(0);
-//   //end of create states
-//   const [users, setUsers] = useState([]);
-//   const usersCollectionRef = collection(db, "users");
-//   useEffect(() => {
-//     const getUsers = async () => {
-//       const data = await getDocs(usersCollectionRef);
-//       setUsers(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
-//     };
-//     getUsers();
-//   }, []);
-
 //collection references
 const showcasesCollectionRef = collection(db, "showcases");
 
@@ -70,4 +55,3 @@ export const getLessons = async (courseName, courses) => {
 //   const userDoc = doc(db, "users", id);
 //   await deleteDoc(userDoc);
 // };
-//////////////////////////////nd of testing db////////////////////////////////////////
