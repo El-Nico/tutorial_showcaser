@@ -52,3 +52,6 @@ button:hover{
   position: relative;
   /* width: 24.2rem; */
 }
+
+/* media queries */
+@import 'mediaQueries.css'

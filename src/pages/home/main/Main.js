@@ -10,7 +10,13 @@ import {
   setReadmeSourceSubchannel,
 } from "../../../redux/features/showcases/showcasesSlice";
 import MDEditor from "@uiw/react-md-editor";
-import { classNames } from "../../../utilities/general";
+import { classNames, generateUID } from "../../../utilities/general";
+import { BsChevronRight, BsChevronLeft } from "react-icons/bs";
+import {
+  COMMITTER,
+  OWNER,
+  create_update_file,
+} from "../../../utilities/github-api";
 
 function Main() {
   const dispatch = useDispatch();
@@ -32,8 +38,41 @@ function Main() {
   const sectionPreviewRef = useRef(null);
   const aboutSectionRef = useRef(null);
 
-  function updateReadme(source) {
-    console.log("do nothing for now");
+  function updateReadme(whichReadme, sub) {
+    const source = whichReadme.markup;
+    const content = window.btoa(source);
+    const sha = whichReadme.sha;
+    const commitMessage =
+      `update Readme for ${
+        sub ? "section " + whichReadme.path.split("/")[0] + " " : "project "
+      } ` + generateUID();
+
+    console.log(commitMessage);
+
+    const path = whichReadme.path;
+    const repo = whichReadme.repo;
+    create_update_file(
+      OWNER,
+      repo,
+      path,
+      commitMessage,
+      COMMITTER,
+      content,
+      sha
+    ).then((res) => {
+      console.log(res);
+      const readmeSource = {
+        repo: repo,
+        markup: source,
+        sha: res.data.content.sha,
+        path: res.data.content.path,
+      };
+      if (sub) {
+        dispatch(setReadmeSourceSubchannel(readmeSource));
+        return;
+      }
+      dispatch(setReadmeSourceProject(readmeSource));
+    });
   }
 
   function handleScroll(aboutProject, sectionPreview, aboutSection) {
@@ -70,9 +109,6 @@ function Main() {
         return curr;
       }
     });
-    // console.log(aboutProjectRef.current.getBoundingClientRect());
-    // console.log(sectionPreviewRef.current.getBoundingClientRect());
-    // console.log(aboutSectionRef.current.getBoundingClientRect());
     console.log(selectMenuItem.select, "yee");
     dispatch(setSelectedMenuButton(selectMenuItem.select));
     // https://stackoverflow.com/questions/635706/how-to-scroll-to-an-element-inside-a-div
@@ -86,14 +122,10 @@ function Main() {
 
   return (
     <main id="Main">
-      {/* <button
-        onClick={() => {
-          boxRef.current.scrollIntoView({ block: "end", behavior: "smooth" });
-        }}
-      >
-        scraa..
-      </button> */}
       <div className="main-menu-bar">
+        <button className="chevron-button">
+          <BsChevronLeft></BsChevronLeft>
+        </button>
         <button
           className={classNames(
             selectedMenuButton === "aboutProject" && "main-active"
@@ -114,6 +146,9 @@ function Main() {
           )}
         >
           About this Section
+        </button>
+        <button className="chevron-button">
+          <BsChevronRight></BsChevronRight>
         </button>
       </div>
       <div
@@ -155,11 +190,10 @@ function Main() {
               />
               <button
                 onClick={() => {
-                  //aight i stopped here
-                  updateReadme();
+                  updateReadme(projectReadme, false);
                 }}
               >
-                done
+                Update Project Readme
               </button>
             </>
           )}
@@ -193,10 +227,10 @@ function Main() {
               />
               <button
                 onClick={() => {
-                  updateReadme();
+                  updateReadme(subchannelReadme, true);
                 }}
               >
-                done
+                Update Section Readme
               </button>
             </>
           )}

@@ -6,6 +6,8 @@ import {
   setShowcases,
 } from "../../../../redux/features/showcases/showcasesSlice";
 import { useNavigate } from "react-router-dom";
+import { GiHamburgerMenu } from "react-icons/gi";
+// https://react-icons.github.io/react-icons/search?q=hamburger
 
 export function Header(props) {
   const dispatch = useDispatch();
@@ -22,8 +24,11 @@ export function Header(props) {
   }
   const navigate = useNavigate();
   return (
-    <header className="header">
+    <header id="header">
       <div className="header-element-container">
+        <div className="header-hamburger-menu-button">
+          <GiHamburgerMenu></GiHamburgerMenu>
+        </div>
         {props.showSelect && (
           <div className="header-custom-select">
             <select

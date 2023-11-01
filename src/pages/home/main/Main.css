@@ -12,8 +12,12 @@
     background: var(--main-colour);
 }
 
-.main-menu-bar button:nth-child(2){
+.main-menu-bar button{
   border-inline:1px solid #4d5061;
+}
+
+#Main .chevron-button{
+max-width: 4%;
 }
 
 .main-box {
@@ -137,3 +141,5 @@
   .main-active{
     background-color: orange
   }
+
+  

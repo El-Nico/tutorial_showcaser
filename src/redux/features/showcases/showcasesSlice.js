@@ -32,8 +32,18 @@ export const showcasesSlice = createSlice({
       channel_url: "http://example.com",
       selected: false,
     },
-    readmeSourceProject: { url: "https://github.com/", markup: "# Example" },
-    readmeSourceSubchannel: { url: "https://github.com/", markup: "# Example" },
+    readmeSourceProject: {
+      repo: "https://github.com/",
+      markup: "# Example",
+      sha: null,
+      path: null,
+    },
+    readmeSourceSubchannel: {
+      repo: "https://github.com/",
+      markup: "# Example",
+      sha: null,
+      path: null,
+    },
     editMode: false,
     iFrame: {
       title: "example",
@@ -126,11 +136,14 @@ setSelectedShowcaseMiddleware.startListening({
 
     getReadme(OWNER, selectedShowcase.id, "")
       .then((res) => {
+        console.log(res);
         const source = window.atob(res.data.content);
         store.dispatch(
           setReadmeSourceProject({
-            url: selectedShowcase.id,
+            repo: selectedShowcase.id,
             markup: source,
+            sha: res.data.sha,
+            path: res.data.path,
           })
         );
       })
@@ -139,7 +152,7 @@ setSelectedShowcaseMiddleware.startListening({
           //sha not required here because its a catch from 404 therefore not an update
           //create a readme file here and dispatch state
           const content = window.btoa(`# ${selectedShowcase.id}`);
-          const commitMessage = "create update project Readme " + generateUID();
+          const commitMessage = "create project Readme " + generateUID();
           create_update_file(
             OWNER,
             selectedShowcase.id,
@@ -147,7 +160,16 @@ setSelectedShowcaseMiddleware.startListening({
             commitMessage,
             COMMITTER,
             content
-          );
+          ).then((res) => {
+            store.dispatch(
+              setReadmeSourceProject({
+                repo: selectedShowcase.id,
+                markup: content,
+                sha: res.data.content.sha,
+                path: res.data.content.path,
+              })
+            );
+          });
         }
       });
 
@@ -215,11 +237,14 @@ setSelectedSubchannelMiddleware.startListening({
     const selectedShowcaseId = state.showcases.selectedShowcase.id;
     getReadme(OWNER, selectedShowcaseId, selectedSubchannel.name)
       .then((res) => {
+        console.log(res);
         const source = window.atob(res.data.content);
         store.dispatch(
           setReadmeSourceSubchannel({
-            url: selectedSubchannel.name,
+            repo: selectedShowcaseId,
             markup: source,
+            sha: res.data.sha,
+            path: res.data.path,
           })
         );
       })
@@ -242,18 +267,16 @@ setSelectedSubchannelMiddleware.startListening({
             COMMITTER,
             content
           ).then((res) => {
-            console.log(res);
             store.dispatch(
               setReadmeSourceSubchannel({
-                url: selectedSubchannel.name,
+                repo: selectedShowcaseId,
                 markup: source,
+                sha: res.data.content.sha,
+                path: res.data.content.path,
               })
             );
           });
         }
       });
-    //add a catch for not found here to create a default markup
   },
 });
-
-// next steps is application state linkeage with scroll

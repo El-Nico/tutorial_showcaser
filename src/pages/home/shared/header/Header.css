@@ -1,4 +1,4 @@
-.header {
+#header {
     grid-area: hd;
     background: var(--main-colour);
     color: #fff;
@@ -6,7 +6,7 @@
     display: grid; 
     padding-inline: 1rem;
 }
-.header .header-element-container{
+#header .header-element-container{
    display: flex;
   
    align-content: center;
@@ -15,9 +15,13 @@
    
 }
 
+.header-hamburger-menu-button{
+    display: none;
+}
+
 /* custom select */
 
-.header select {
+#header select {
     /* box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); */
     font-size: 1rem;
     padding: 0.5em 7em 0.5em 0.75em;
@@ -78,7 +82,7 @@
 
 
 
-.header .header-element-container .nav-about {
+#header .header-element-container .nav-about {
     /* justify-self: end; */
 }
 
@@ -90,3 +94,21 @@
 .header-nav-logo {
     color: orange;
 }
+
+@media only screen and (max-width: 800px) {
+    .header-hamburger-menu-button{
+        display: block;
+    }
+    #header .header-element-container{
+        display: grid;
+        place-content: center;
+        grid-template-rows: 1fr 1fr;
+        z-index: 1;
+        grid-template-columns: repeat(3, 1fr);
+    }
+    #header .header-custom-select{
+        grid-row-start: 3;
+        grid-column-start: span 3;
+        place-self: center;
+    }
+  }
