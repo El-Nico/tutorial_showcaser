@@ -8,6 +8,7 @@ import {
 import {
   setReadmeSourceProject,
   setReadmeSourceSubchannel,
+  setSelectedSubchannel,
 } from "../../../redux/features/showcases/showcasesSlice";
 import MDEditor from "@uiw/react-md-editor";
 import { classNames, generateUID } from "../../../utilities/general";
@@ -31,6 +32,11 @@ function Main() {
   const iFrame = useSelector((state) => state.showcases.iFrame);
   const selectedMenuButton = useSelector(
     (state) => state.applicationState.selectedMenuButton
+  );
+
+  const subchannels = useSelector((state) => state.showcases.subchannels);
+  const selectedSubchannel = useSelector(
+    (state) => state.showcases.selectedSubchannel
   );
 
   const scrollDivRef = useRef(null);
@@ -90,17 +96,15 @@ function Main() {
       { elRef: sectionPreviewOffset, select: "sectionPreview" },
       { elRef: aboutSectionOffset, select: "aboutSection" },
     ];
-    console.log(relOffsets);
+
     const pTop = scrollDivRef.current.getBoundingClientRect().top;
     const selectMenuItem = relOffsets.reduce((curr, next, ci) => {
-      console.log(curr, next, ci);
       if (!curr.elRef) {
         console.log(curr, ci);
         console.log(next);
         console.log("not ran");
         return { elRef: sectionPreviewOffset, select: "sectionPreview" };
       }
-      console.log("i actually got here", curr.elRef);
       const currTop = curr.elRef;
       const nextTop = next.elRef;
       if (Math.abs(nextTop - pTop) < Math.abs(currTop - pTop)) {
@@ -109,24 +113,115 @@ function Main() {
         return curr;
       }
     });
-    console.log(selectMenuItem.select, "yee");
     dispatch(setSelectedMenuButton(selectMenuItem.select));
     // https://stackoverflow.com/questions/635706/how-to-scroll-to-an-element-inside-a-div
+    console.table([
+      { title: "onscroll" },
+      {
+        name: "aboutProject",
+        top: aboutProjectRef.current.getBoundingClientRect().top,
+        relOffset: aboutProjectRef.current.getBoundingClientRect().top - pTop,
+      },
+      {
+        name: "sectionPreview",
+        top: sectionPreviewRef.current.getBoundingClientRect().top,
+        relOffset: sectionPreviewRef.current.getBoundingClientRect().top - pTop,
+      },
+      {
+        name: "aboutSection",
+        top: aboutSectionRef.current.getBoundingClientRect().top,
+        relOffset: aboutSectionRef.current.getBoundingClientRect().top - pTop,
+      },
+      {
+        name: "scrollDiv",
+        top: pTop,
+        relOffset: scrollDivRef.current.getBoundingClientRect().top - pTop,
+      },
+    ]);
   }
-
+  console.log("weve got a rerender");
   useLayoutEffect(() => {
-    mainScrollTo(sectionPreviewRef.current);
+    console.log("runnign");
+    // mainScrollTo(sectionPreviewRef);
   }, []);
 
-  function mainScrollTo(elementRef) {}
+  function mainScrollTo(elementRef, menuState) {
+    const pTop = scrollDivRef.current.getBoundingClientRect().top;
+    const elTop = elementRef.current.getBoundingClientRect().top;
+    const relOffset = elTop - pTop;
+
+    // console.log(elTop, pTop, relOffset);
+    // console.table([
+    //   { title: "before" },
+    //   {
+    //     name: "aboutProject",
+    //     top: aboutProjectRef.current.getBoundingClientRect().top,
+    //     relOffset: aboutProjectRef.current.getBoundingClientRect().top - pTop,
+    //   },
+    //   {
+    //     name: "sectionPreview",
+    //     top: sectionPreviewRef.current.getBoundingClientRect().top,
+    //     relOffset: sectionPreviewRef.current.getBoundingClientRect().top - pTop,
+    //   },
+    //   {
+    //     name: "aboutSection",
+    //     top: aboutSectionRef.current.getBoundingClientRect().top,
+    //     relOffset: aboutSectionRef.current.getBoundingClientRect().top - pTop,
+    //   },
+    //   {
+    //     name: "scrollDiv",
+    //     top: pTop,
+    //     relOffset: scrollDivRef.current.getBoundingClientRect().top - pTop,
+    //   },
+    // ]);
+    scrollDivRef.current.scrollTo({ top: relOffset, behavior: "smooth" });
+    // console.log(elTop, pTop, relOffset);
+    console.table([
+      { title: "after" },
+      {
+        name: "aboutProject",
+        top: aboutProjectRef.current.getBoundingClientRect().top,
+        relOffset: aboutProjectRef.current.getBoundingClientRect().top - pTop,
+      },
+      {
+        name: "sectionPreview",
+        top: sectionPreviewRef.current.getBoundingClientRect().top,
+        relOffset: sectionPreviewRef.current.getBoundingClientRect().top - pTop,
+      },
+      {
+        name: "aboutSection",
+        top: aboutSectionRef.current.getBoundingClientRect().top,
+        relOffset: aboutSectionRef.current.getBoundingClientRect().top - pTop,
+      },
+      {
+        name: "scrollDiv",
+        top: pTop,
+        relOffset: scrollDivRef.current.getBoundingClientRect().top - pTop,
+      },
+    ]);
+    // dispatch(setSelectedMenuButton(menuState));
+  }
 
   return (
     <main id="Main">
       <div className="main-menu-bar">
-        <button className="chevron-button">
+        <button
+          onClick={() => {
+            const i = subchannels.findIndex(
+              (sub) => sub.name === selectedSubchannel.name
+            );
+            if (i > 0) {
+              dispatch(setSelectedSubchannel(subchannels[i - 1]));
+            }
+          }}
+          className="chevron-button"
+        >
           <BsChevronLeft></BsChevronLeft>
         </button>
         <button
+          onClick={() => {
+            mainScrollTo(aboutProjectRef, "aboutProject");
+          }}
           className={classNames(
             selectedMenuButton === "aboutProject" && "main-active"
           )}
@@ -134,6 +229,9 @@ function Main() {
           About this Project
         </button>
         <button
+          onClick={() => {
+            mainScrollTo(sectionPreviewRef, "sectionPreview");
+          }}
           className={classNames(
             selectedMenuButton === "sectionPreview" && "main-active"
           )}
@@ -141,13 +239,32 @@ function Main() {
           Section Preview
         </button>
         <button
+          onClick={() => {
+            mainScrollTo(aboutSectionRef, "aboutSection");
+          }}
           className={classNames(
             selectedMenuButton === "aboutSection" && "main-active"
           )}
         >
           About this Section
         </button>
-        <button className="chevron-button">
+        <button
+          onClick={() => {
+            // const subchannels = useSelector(
+            //   (state) => state.showcases.subchannels
+            // );
+            // const selectedSubchannel = useSelector(
+            //   (state) => state.showcases.selectedSubchannel
+            // );
+            const i = subchannels.findIndex(
+              (sub) => sub.name === selectedSubchannel.name
+            );
+            if (i < subchannels.length - 1) {
+              dispatch(setSelectedSubchannel(subchannels[i + 1]));
+            }
+          }}
+          className="chevron-button"
+        >
           <BsChevronRight></BsChevronRight>
         </button>
       </div>
