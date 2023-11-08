@@ -118,7 +118,7 @@ async function refresh_all_showcases_local() {
   // );
   // const deletedAll = await Promise.all(delAllCourseShowcaseArr);
   const deletedAll = await delete_all_preview_channels_local();
-  console.log(deletedAll);
+  // console.log(deletedAll);
 
   //then generate all
   let genResults = [];
@@ -130,7 +130,7 @@ async function refresh_all_showcases_local() {
   return { deleted: deletedAll, generated: genResults };
 }
 exports.test_rand = onRequest(
-  { timeoutSeconds: 540, memory: "1GiB" },
+  { timeoutSeconds: 540, memory: "1.5GiB" },
   async (req, res) => {
     const results = await refresh_all_showcases_local();
     // const results = await generate_showcase_local({
@@ -159,7 +159,7 @@ exports.refresh_all_showcases = onSchedule(
   },
   async (event) => {
     const results = await refresh_all_showcases_local();
-    console.log(results);
+    // console.log(results);
   }
 );
 
@@ -200,7 +200,7 @@ function downloadCourse(courseName) {
         return decompress(dest, os.tmpdir()); //"./"
       })
       .then((files) => {
-        console.log(os.tmpdir() + files[0].path);
+        // console.log(os.tmpdir() + files[0].path);
         const parentDir = os.tmpdir() + "/" + files[0].path;
         //delete temp.zip
         fs.rmSync(dest, { recursive: true, force: true });
@@ -226,18 +226,23 @@ function deleteAllExceptFolder(src, folder) {
 function buildFiles(courseDir, hos) {
   return new Promise((resolve, reject) => {
     const files = fs.readdirSync(courseDir);
+    // remove all readme md not necessary to render preview
     // console.log(files);
     let cFiles = {};
     // let cFilesTemp = [];
     files.forEach((dir) => {
       //first  layer
       // console.log("FILE 11111111111");
-      readDir = courseDir + "/" + dir;
+      // console.log(dir);
+      readDir = courseDir + dir;
       if (dir.toLowerCase() === "readme.md") {
+        // console.log("im here now", readDir);
         //DELETE README HERE FOR NOW
         fs.rmSync(readDir, { recursive: true, force: true });
+        // console.log("i didnt make it here uuu", readDir);
         return;
       }
+      // console.log(readDir);
       const subFiles = fs.readdirSync(readDir);
       const cFilesTemp = [];
       let publicFolder = readDir;
@@ -251,11 +256,18 @@ function buildFiles(courseDir, hos) {
         deleteAllExceptFolder(readDir, hos);
       }
       for (const filePath of walkSync(publicFolder)) {
+        console.log(filePath);
+        if (filePath.toLowerCase().endsWith("readme.md")) {
+          console.log("read", filePath);
+          fs.rmSync(filePath, { recursive: true, force: true });
+          continue;
+        }
         cFilesTemp.push(filePath.replace(/\\/g, "/"));
       }
       // console.log("this is the current cfiles for lesson " + dir, cFilesTemp);
       cFiles[dir] = cFilesTemp;
     });
+    // console.log(cFiles);
     resolve(cFiles);
 
     function* walkSync(directory) {
@@ -288,7 +300,7 @@ function generate_showcase_local(existingShowcase = {}) {
 
     let courseName = existingShowcase.title,
       hostingFolder = existingShowcase.hosting_folder || null;
-    console.log(courseName, hostingFolder);
+    // console.log(courseName, hostingFolder);
     downloadCourse(courseName)
       .then((courseDir) => {
         coursefolderName = courseDir;
@@ -322,19 +334,19 @@ function generate_showcase_local(existingShowcase = {}) {
               //upload hashes to populate files endpoint
               //i think here is where i need to manipulate the urls
               .then((urlHexBufferTree) => {
-                console.log(urlHexBufferTree);
+                // console.log(urlHexBufferTree);
                 operationDetails.urlHexBufferTree = urlHexBufferTree;
                 //get tree in aappropriate form
                 const mappedTreeObj = urlHexBufferTree.reduce(
                   (mappedTree, currValue) => {
-                    console.log(currValue);
+                    // console.log(currValue);
                     //take away first 2 parts of url including coursname and folder name
                     const url = currValue.url.split("/").includes(hostingFolder)
                       ? currValue.url.split(
                           operationDetails.channel_id + "/" + hostingFolder
                         )[1]
                       : currValue.url.split(operationDetails.channel_id)[1];
-                    console.log(url);
+                    // console.log(url);
                     const hex = currValue.hex;
                     const mappedCurrValue = {};
                     mappedCurrValue[url] = hex;
@@ -343,9 +355,9 @@ function generate_showcase_local(existingShowcase = {}) {
                   },
                   { files: {} }
                 );
-                console.log("reduced files", mappedTreeObj);
+                // console.log("reduced files", mappedTreeObj);
                 const finalObj = JSON.stringify(mappedTreeObj);
-                console.log(finalObj);
+                // console.log(finalObj);
                 //upload hexes
                 return populateVersionFiles(
                   finalObj,
@@ -355,6 +367,7 @@ function generate_showcase_local(existingShowcase = {}) {
                 );
               })
               .then((res) => {
+                // console.log("populate", res);
                 //upload files
                 const promises = operationDetails.urlHexBufferTree.map(
                   (file) => {
@@ -370,6 +383,7 @@ function generate_showcase_local(existingShowcase = {}) {
                 return Promise.all(promises);
               })
               .then((allPromises) => {
+                // console.log("upload", allPromises);
                 //delete the github folder
                 return finalizeVersion(
                   token,
@@ -392,12 +406,19 @@ function generate_showcase_local(existingShowcase = {}) {
                 showcase.subchannels.push(operationDetails);
                 deployIndex += 1;
 
+                // console.log(showcase, lessonArr, deployIndex, lessonArr.length);
+                console.log(deployIndex);
                 if (lessonArr.length === deployIndex) {
-                  console.log(showcase);
+                  // console.log("is this fail?", showcase);
+                  console.log("complete");
+
                   firestore
                     .collection("showcases")
                     .doc(courseName)
                     .set(showcase, { merge: true });
+                  // console.log(
+                  //   "then i never made it here and firestore needs to suck my pp"
+                  // );
                   //delete the github folder
                   fs.rmSync(coursefolderName, { recursive: true, force: true });
                   resolve("last index deployed successfully");
@@ -419,7 +440,7 @@ exports.delete_one_channel = functions.https.onRequest((req, res) => {
       return deletePreviewChannel(MY_APP.SITE_ID, token, channelName);
     })
     .then((allPromises) => {
-      console.log(allPromises);
+      // console.log(allPromises);
       // return deleteVersion(MY_APP.SITE_ID, tokena, "c449b362bef9bdbd");
     });
 });
@@ -447,7 +468,7 @@ exports.delete_one_channel = functions.https.onRequest((req, res) => {
       return deletePreviewChannel(MY_APP.SITE_ID, token, channelName);
     })
     .then((allPromises) => {
-      console.log(allPromises);
+      // console.log(allPromises);
       // return deleteVersion(MY_APP.SITE_ID, tokena, "c449b362bef9bdbd");
     });
 });
@@ -456,7 +477,7 @@ async function delete_showcase_local(courseName) {
   const lessons = (
     await firestore.collection("showcases").doc(courseName).get()
   ).data().subchannels;
-  console.log(lessons);
+  // console.log(lessons);
   let tokena = "";
   return new Promise((resolve, reject) => {
     if (lessons === undefined) {
@@ -478,7 +499,7 @@ async function delete_showcase_local(courseName) {
         return Promise.all(deleteAllChannelArr);
       })
       .then((allPromises) => {
-        console.log("channels deleted" + allPromises);
+        // console.log("channels deleted" + allPromises);
         const deleteAllVersionArr = lessons.reduce(
           (delPromiseArr, currLesson) => {
             delPromiseArr.push(
@@ -491,7 +512,7 @@ async function delete_showcase_local(courseName) {
         return Promise.all(deleteAllVersionArr);
       })
       .then((allVersionPromise) => {
-        console.log(allVersionPromise);
+        // console.log(allVersionPromise);
         //delete all documents from firebase
         firestore.collection("showcases").doc(courseName).update({
           subchannels: FieldValue.delete(),
@@ -533,17 +554,30 @@ function delete_all_preview_channels_local() {
           const deletePromises = channelList.channels
             .filter((channel) => channel.name.split("/")[3] !== "live")
             .map((channel) => {
-              console.log(channel);
+              // console.log(channel);
               const channelId = channel.name.split("/")[3];
               return deletePreviewChannel(MY_APP.SITE_ID, token, channelId);
             });
           return Promise.all(deletePromises);
         })
         .then((allDeletedChannels) => {
-          console.log(allDeletedChannels);
+          // console.log(allDeletedChannels);
           resolve(allDeletedChannels);
         });
     });
   });
 }
 //////////////////////////end of the begging of the end/////////////////////
+//BEST SOLUTION PROLLY JUST GET RID OF ALL THE READMES
+
+// NEED TO UNDERSTAND THIS ///
+/* In addition, when a subsequent invocation is executed in the same environment,
+ your background activity resumes, interfering with the new invocation. 
+ This may lead to unexpected behavior and errors that are hard to diagnose. 
+ Accessing the network after a function terminates usually leads to connections being reset (ECONNRESET error code).
+ // Background activity can often be detected in logs from individual invocations, 
+ by finding anything that is logged after the line saying that the invocation finished. 
+ Background activity can sometimes be buried deeper in the code, 
+ especially when asynchronous operations such as callbacks or timers are present. 
+ Review your code to make sure all asynchronous operations finish before you terminate the function.
+// // */

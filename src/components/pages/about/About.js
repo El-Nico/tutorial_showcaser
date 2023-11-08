@@ -1,5 +1,5 @@
-import Footer from "../home/shared/footer/Footer";
-import { Header } from "../home/shared/header/Header";
+import Footer from "../../shared/footer/Footer";
+import { Header } from "../../shared/header/Header";
 import "./About.css";
 
 export function About() {

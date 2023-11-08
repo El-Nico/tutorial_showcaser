@@ -93,6 +93,11 @@
 
 .header-nav-logo {
     color: orange;
+    cursor: pointer;
+}
+.header-nav-logo:hover{
+    cursor: pointer;
+    color: #FED8B1;
 }
 
 @media only screen and (max-width: 800px) {

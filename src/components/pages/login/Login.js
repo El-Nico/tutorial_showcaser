@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { auth } from "../../firebase";
+import { auth } from "../../../firebase";
 import { NavLink, useNavigate } from "react-router-dom";
 import "./Login.css";
-import { useDispatch } from "react-redux";
-import { setUser } from "../../store";
+// import { useDispatch } from "react-redux";
+// import { setUser } from "../../store";
 
 export function Login() {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ export function Login() {
   const [password, setPassword] = useState("");
 
   //redux
-  const dispatch = useDispatch();
+  // const dispatch = useDispatch();
 
   const onLogin = (e) => {
     e.preventDefault();
@@ -20,7 +20,7 @@ export function Login() {
       .then((userCredential) => {
         // Signed in
         const user = userCredential.user;
-        dispatch(setUser(user.credentials));
+        // dispatch(setUser(user.credentials));
         navigate("/home");
         console.log(user);
       })
