@@ -1,8 +1,8 @@
 import React from "react";
 import "./Sidebar.css";
 import { useDispatch, useSelector } from "react-redux";
-import { setSelectedSubchannel } from "../../../redux/features/showcases/showcasesSlice";
-import { classNames } from "../../../utilities/general";
+import { setSelectedSubchannel } from "../../../../redux/features/showcases/showcasesSlice";
+import { classNames } from "../../../../utilities/general";
 
 function Sidebar() {
   const dispatch = useDispatch();

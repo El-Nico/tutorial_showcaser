@@ -1,0 +1,8 @@
+if theres an error resolve the instance to fail
+
+cold prevent arbitraru connreset exceptions
+
+
+request.on('error', (e) => {
+   console.log(e)
+})

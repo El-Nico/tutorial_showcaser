@@ -1,10 +1,6 @@
-import { useEffect } from "react";
 import "./Header.css";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  setSelectedShowcase,
-  setShowcases,
-} from "../../../../redux/features/showcases/showcasesSlice";
+import { setSelectedShowcase } from "../../../redux/features/showcases/showcasesSlice";
 import { useNavigate } from "react-router-dom";
 import { GiHamburgerMenu } from "react-icons/gi";
 // https://react-icons.github.io/react-icons/search?q=hamburger

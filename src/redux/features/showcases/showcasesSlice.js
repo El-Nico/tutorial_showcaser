@@ -1,18 +1,5 @@
-import {
-  createAsyncThunk,
-  createListenerMiddleware,
-  createSlice,
-} from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getShowcases } from "../../../utilities/firestore-crud";
-import { store } from "../../store";
-import {
-  COMMITTER,
-  OWNER,
-  create_update_file,
-  getReadme,
-  getRepoContents,
-} from "../../../utilities/github-api";
-import { generateUID } from "../../../utilities/general";
 
 export const showcasesSlice = createSlice({
   name: "showcases",
@@ -63,7 +50,6 @@ export const showcasesSlice = createSlice({
     setSelectedSubchannel: (state, action) => {
       const currSelected = state.selectedSubchannel;
       if (currSelected.name === action.payload.name) {
-        console.log("sane one");
         return;
       }
       state.subchannels = state.subchannels.map((sub) => {
@@ -120,163 +106,6 @@ export const initializeShowcases = createAsyncThunk(
   "showcases/getShowcases",
   () =>
     getShowcases().then((showcases) => {
-      store.dispatch(setSelectedShowcase(showcases[0]));
       return showcases;
     })
 );
-export const setSelectedShowcaseMiddleware = createListenerMiddleware();
-
-setSelectedShowcaseMiddleware.startListening({
-  actionCreator: setSelectedShowcase,
-  effect: async (action, listenerApi) => {
-    //run async logic here
-    const selectedShowcase = action.payload;
-    //dispatch readme and iframe(if no subchannels and has main preview ess my website)
-    //readme
-
-    getReadme(OWNER, selectedShowcase.id, "")
-      .then((res) => {
-        console.log(res);
-        const source = window.atob(res.data.content);
-        store.dispatch(
-          setReadmeSourceProject({
-            repo: selectedShowcase.id,
-            markup: source,
-            sha: res.data.sha,
-            path: res.data.path,
-          })
-        );
-      })
-      .catch((err) => {
-        if (err.status === 404) {
-          //sha not required here because its a catch from 404 therefore not an update
-          //create a readme file here and dispatch state
-          const content = window.btoa(`# ${selectedShowcase.id}`);
-          const commitMessage = "create project Readme " + generateUID();
-          create_update_file(
-            OWNER,
-            selectedShowcase.id,
-            "README.MD",
-            commitMessage,
-            COMMITTER,
-            content
-          ).then((res) => {
-            store.dispatch(
-              setReadmeSourceProject({
-                repo: selectedShowcase.id,
-                markup: content,
-                sha: res.data.content.sha,
-                path: res.data.content.path,
-              })
-            );
-          });
-        }
-      });
-
-    let subchannels = [];
-    if (selectedShowcase.previewUrl) {
-      subchannels.push({
-        mainPreview: true,
-        name: "Main Preview",
-        url: selectedShowcase.previewUrl,
-        selected: false,
-      });
-    }
-    if (selectedShowcase.subchannels) {
-      ///could make this code section more elegant with async/await
-      getRepoContents(OWNER, selectedShowcase.id, "").then((repoContents) => {
-        const subs = repoContents.data
-          .filter((content) => !content.name.toLowerCase().endsWith(".md"))
-          .map((sub) => {
-            return { ...sub, selected: false };
-          });
-        subchannels.push(...subs);
-        store.dispatch(setSubchannels(subchannels));
-      });
-    } else {
-      store.dispatch(setSubchannels(subchannels));
-      //dispatch iframe here
-    }
-  },
-});
-
-//the only thing set subchannels middleware should do is
-//store.dispatch setselectedsuchannel(subchannesl[0])
-
-//then the setselected subchannel middleware should handle the rest
-
-export const setSubchannelsMiddleware = createListenerMiddleware();
-
-setSubchannelsMiddleware.startListening({
-  actionCreator: setSubchannels,
-  effect: async (action, listenerApi) => {
-    const selectedSubchannel = action.payload[0];
-    const state = listenerApi.getState();
-    store.dispatch(setSelectedSubchannel(selectedSubchannel));
-  },
-});
-
-export const setSelectedSubchannelMiddleware = createListenerMiddleware();
-
-setSelectedSubchannelMiddleware.startListening({
-  actionCreator: setSelectedSubchannel,
-  effect: async (action, listenerApi) => {
-    const selectedSubchannel = action.payload;
-    const state = listenerApi.getState();
-    //handle iframe here
-    const currentPreview = state.showcases.selectedShowcase.subchannels.find(
-      (subch) => subch.lessonName === selectedSubchannel.name
-    );
-    store.dispatch(
-      setIframe({
-        title: currentPreview.lessonName,
-        url: currentPreview.channel_url,
-      })
-    );
-    //readme for selected subchannel only here because its dependent
-    const selectedShowcaseId = state.showcases.selectedShowcase.id;
-    getReadme(OWNER, selectedShowcaseId, selectedSubchannel.name)
-      .then((res) => {
-        console.log(res);
-        const source = window.atob(res.data.content);
-        store.dispatch(
-          setReadmeSourceSubchannel({
-            repo: selectedShowcaseId,
-            markup: source,
-            sha: res.data.sha,
-            path: res.data.path,
-          })
-        );
-      })
-      .catch((err) => {
-        console.log("errorhere", err, err.status);
-        if (err.status === 404) {
-          //sha not required here because its a catch from 404 therefore not an update
-          //create a readme file here and dispatch state
-          const source = `# ${selectedSubchannel.name}`;
-          const content = window.btoa(source);
-          const commitMessage =
-            `create Readme for section ${selectedSubchannel.name} ` +
-            generateUID();
-          const path = selectedSubchannel.name + "/" + "README.MD";
-          create_update_file(
-            OWNER,
-            selectedShowcaseId,
-            path,
-            commitMessage,
-            COMMITTER,
-            content
-          ).then((res) => {
-            store.dispatch(
-              setReadmeSourceSubchannel({
-                repo: selectedShowcaseId,
-                markup: source,
-                sha: res.data.content.sha,
-                path: res.data.content.path,
-              })
-            );
-          });
-        }
-      });
-  },
-});

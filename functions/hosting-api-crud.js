@@ -117,7 +117,7 @@ exports.listPreviewChannels = function (site_id, access_token) {
       res.on("end", function () {
         const body = Buffer.concat(chunks);
         const bodyString = body.toString();
-        console.log("from channel list", bodyString);
+        // console.log("from channel list", bodyString);
         resolve(JSON.parse(bodyString));
       });
     });
@@ -185,7 +185,7 @@ exports.createVersion = function (site_id, access_token) {
       });
       res.on("end", function () {
         const body = Buffer.concat(chunks);
-        console.log(body.toString());
+        // console.log(body.toString());
         const version = JSON.parse(body.toString());
         resolve(version);
       });
@@ -228,7 +228,7 @@ exports.populateVersionFiles = function (
       });
       res.on("end", function () {
         const body = Buffer.concat(chunks);
-        resolve(JSON.parse(body.toString()));
+        resolve({ parse: JSON.parse(body.toString()), id: files });
       });
     });
     req.write(files);
@@ -265,7 +265,7 @@ exports.uploadVersionFile = function (
 
       res.on("end", function () {
         const body = Buffer.concat(chunks);
-        resolve(body.toString());
+        resolve({ bodyString: body.toString(), id: fileUrl });
       });
     });
 
