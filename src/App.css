@@ -2,3 +2,7 @@ main{
     max-width: var(--website-width);
     margin-inline: auto;
 }
+
+.main-markdown-editor {
+    width: 100%;
+}

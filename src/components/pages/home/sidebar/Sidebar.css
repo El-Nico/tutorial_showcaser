@@ -1,7 +1,7 @@
 #Sidebar {
     grid-area: sb;
     background-color: #242443;
-    /* height: 100vh; */
+    min-height: 100vh;
     place-content: start;
     display: flex;
     flex-direction: column;
@@ -16,7 +16,7 @@
     border-bottom:1px solid #4d5061;
 }
 
-@media only screen and (max-width: 800px) {
+@media only screen and (max-width: 900px) {
     #Sidebar{
         display: none;
     }

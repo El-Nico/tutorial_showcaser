@@ -7,6 +7,7 @@ export const showcasesSlice = createSlice({
     loading: false,
     error: "",
     showcases: [{ title: "example" }],
+    isOpenSidebar: false,
     selectedShowcase: {
       title: "example",
       previewUrl: "http://example.com/",
@@ -38,6 +39,9 @@ export const showcasesSlice = createSlice({
     },
   },
   reducers: {
+    setOpenSidebar: (state, action) => {
+      state.isOpenSidebar = action.payload;
+    },
     setShowcases: (state, action) => {
       state.showcases = action.payload;
     },
@@ -92,6 +96,7 @@ export const showcasesSlice = createSlice({
   },
 });
 export const {
+  setOpenSidebar,
   setShowcases,
   setSelectedShowcase,
   setSubchannels,

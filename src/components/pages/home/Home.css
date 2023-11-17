@@ -1,10 +1,83 @@
 .home {
     font-family: "Roboto", sans-serif;
     height: 100vh;
-    display: grid;
+    /* display: grid;
     grid-template-columns: repeat(9, 1fr);
     grid-auto-rows: 50px auto 50px;
     grid-template-areas: "hd hd hd hd hd hd hd hd hd" "sb sb mn mn mn mn mn mn mn " "ft ft ft ft ft ft ft ft ft";
-    gap: 0.5rem;
+    gap: 0.5rem; */
 }
 /* gridgarden.com */
+
+.main-content {
+    display: flex;
+    gap: 8px;
+}
+
+.main-sidebar {
+    width: 25%;
+    margin-top: 8px;
+}
+
+.main-container {
+    width: 75%;
+}
+
+
+@media only screen and (max-width: 900px) {
+    .main-container {
+        width: 100%;
+    }
+    .main-sidebar {
+        display: none;
+    }
+}
+
+.sidebarmobile {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 300px;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 10;
+    background-color: #242443;
+    box-shadow: 0 4px 8px #0003;
+    display: none;
+  }
+  .sidebarmobile-close {
+    color: white;
+  }
+  .sidebarmobile-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    /* position: relative; */
+    /* z-index: 1; */
+  }
+  .sidebarmobile-transition {
+    position: absolute;
+    left: 0;
+    top: 0;
+    background-color: rgba(0, 0, 0);
+    opacity: 0.4;
+    z-index: 9;
+    height: 100vh;
+    width: 100vw;
+  }
+
+@media only screen and (max-width: 900px) {
+    .sidebarmobile {
+        display: block;
+    }
+  }
+  .sidebarmobile #Sidebar {
+    display: block !important;
+  }
+  .sidebarmobile-close {
+    display: flex;
+    justify-content: end;
+    margin-bottom: 20px;
+    padding: 10px;
+    cursor: pointer;
+  }

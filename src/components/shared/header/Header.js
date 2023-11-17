@@ -1,8 +1,9 @@
 import "./Header.css";
 import { useDispatch, useSelector } from "react-redux";
-import { setSelectedShowcase } from "../../../redux/features/showcases/showcasesSlice";
+import { setOpenSidebar, setSelectedShowcase } from "../../../redux/features/showcases/showcasesSlice";
 import { useNavigate } from "react-router-dom";
 import { GiHamburgerMenu } from "react-icons/gi";
+import { classNames } from "../../../utilities/general";
 // https://react-icons.github.io/react-icons/search?q=hamburger
 
 export function Header(props) {
@@ -12,30 +13,50 @@ export function Header(props) {
     (state) => state.showcases.selectedShowcase
   );
 
+  function changeIsOpenSidebar(e) {
+    console.log("E", e);
+    if (e) {
+      document.body.style.overflow = 'hidden';
+      console.log("HIDDEN");
+    } else {
+      document.body.style.overflow = 'auto';
+      console.log("AUTO");
+    }
+    dispatch(setOpenSidebar(e));
+  }
+
   function changeSelectedShowcase(e) {
     const selectedShowcase = showcases.find(
-      (showcase) => showcase.title === e.target.value
+      (showcase) => showcase?.title === e.target.value
     );
     dispatch(setSelectedShowcase(selectedShowcase));
   }
+
   const navigate = useNavigate();
   return (
     <header id="header">
-      <div className="header-element-container">
-        <div className="header-hamburger-menu-button">
+      <div 
+          className={classNames(
+            !props.showSelect ? "header-element-container-left header-element-container" : "header-element-container"
+      )}>
+        {props.showSelect && (
+        <div className="header-hamburger-menu-button" onClick={() => {
+            changeIsOpenSidebar(true);
+          }}>
           <GiHamburgerMenu></GiHamburgerMenu>
         </div>
+        )}
         {props.showSelect && (
           <div className="header-custom-select">
             <select
-              value={selectedShowcase.title}
+              value={selectedShowcase?.title}
               onChange={(e) => {
                 changeSelectedShowcase(e);
               }}
             >
               {showcases.map((showcase) => (
-                <option key={showcase.title} value={showcase.title}>
-                  {showcase.title}
+                <option key={showcase?.title} value={showcase?.title}>
+                  {showcase?.title}
                 </option>
               ))}
             </select>
@@ -43,7 +64,8 @@ export function Header(props) {
           </div>
         )}
         <div
-          className="header-nav-logo"
+          className={classNames(
+            !props.showSelect ? "header-nav-logo margin-off" : "header-nav-logo")}
           onClick={() => {
             navigate("/home");
           }}
@@ -59,6 +81,24 @@ export function Header(props) {
           <h3>About</h3>
         </div>
       </div>
+      <div className="header-select">
+        <div className="header-custom-select-mobile">
+          <select
+            value={selectedShowcase?.title}
+            onChange={(e) => {
+              changeSelectedShowcase(e);
+            }}
+          >
+            {showcases.map((showcase) => (
+              <option key={showcase?.title} value={showcase?.title}>
+                {showcase?.title}
+              </option>
+            ))}
+          </select>
+          <span className="header-custom-arrow"></span>
+        </div>
+      </div>
     </header>
+    
   );
 }

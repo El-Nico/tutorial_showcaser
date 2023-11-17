@@ -30,7 +30,7 @@ export const getShowcases = async () => {
 //// get Lessons with coursename
 export const getLessons = async (courseName, courses) => {
   const previewCollectionId = await courses.find(
-    (course) => course.title === courseName
+    (course) => course?.title === courseName
   ).preview_channels;
   const lessonsCollectionRef = collection(db, previewCollectionId);
   let lessons = [];

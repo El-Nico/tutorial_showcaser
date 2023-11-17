@@ -10,6 +10,13 @@
 .main-menu-bar{
     display: flex;
     background: var(--main-colour);
+    margin-top: 8px;
+}
+
+button {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden !important;
 }
 
 .main-menu-bar button{
@@ -19,11 +26,26 @@
 #Main .chevron-button{
 max-width: 4%;
 }
+.chevron-button.right {
+  padding: 0 !important;
+  min-width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} 
+.chevron-button.left {
+  padding: 0 !important;
+  min-width: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+} 
 
 .main-box {
     color: #fff;
     font-size: 2rem;
     padding: 0;
+    /* border-radius: 8px; */
     /* border: 1px linear-gradient( to bottom, #eee, #999) solid; */
     /* border: 1rem grey dashed; */
     min-height: 100%;
@@ -48,10 +70,14 @@ max-width: 4%;
     /* Firefox */
     -ms-overflow-style: none;
     /* Internet Explorer 10+ */
-    border: 2px solid #3b3c47;
+    border: 2px solid #d7d7d7;
     position: relative;
-    height: 100vh;
-    max-height: 100vh;
+    border-radius: 8px;
+    /* height: 100vh;
+    max-height: 100vh; */
+    height: calc(100vh - 45px - 52px - 10px);
+    margin-bottom: 8px;
+    /* padding: 10px; */
 }
 
 
@@ -75,12 +101,64 @@ max-width: 4%;
 /* rounded slider */
  /* The switch - the box around the slider */
  .main-switch {
-    position: fixed;
+    position: sticky;
     display: inline-block;
     width: 60px;
     height: 34px;
-    right: 0;
+    right: 6px;
+    float: right;
+    top: 8px;
     z-index: 1;
+    opacity: 0.4;
+  }
+
+  .main-switch:hover {
+    opacity: 1;
+  }
+
+  .main-switch.active {
+  }
+
+  .main-switch.active .main-slider {
+    background-color: rgb(255, 214, 139);
+  }
+
+.tooltip {
+  /* position: relative; */
+  display: inline-block;
+}
+  .tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    padding: 5px 0;
+    border-radius: 6px;
+   
+    /* Position the tooltip text - see examples below! */
+    position: absolute;
+    margin-left: -60px;
+    margin-top: 38px;
+    z-index: 1;
+  }
+  
+  /* Show the tooltip text when you mouse over the tooltip container */
+  .tooltip:hover .tooltiptext {
+    visibility: visible;
+  }
+
+  .main-switch.active .main-slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    right: 4px;
+    bottom: 4px;
+    margin-left: 24px;
+    background-color: orange;
+    -webkit-transition: .4s;
+    transition: .4s;
   }
   
   /* Hide default HTML checkbox */
@@ -146,5 +224,12 @@ max-width: 4%;
     margin-top: 1rem;
   }
 
+
+@media only screen and (max-width: 900px) {
+  button {
+    font-size: 10px !important;
+    padding: 10px 8px;
+  }
+}
 
   

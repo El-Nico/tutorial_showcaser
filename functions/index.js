@@ -34,7 +34,7 @@ async function delete_all_showcases_local() {
   courses = courses.docs
     .map((doc) => doc.data())
     .map((course) => {
-      const courseName = course.title;
+      const courseName = course?.title;
       const hostingFolder = course.hosting_folder ? course.hosting_folder : "";
       return {
         courseName: courseName,
@@ -57,7 +57,7 @@ async function generate_all_showcases_local() {
     doc.data()
   );
   courses = courses.map((course) => {
-    const courseName = course.title;
+    const courseName = course?.title;
     const hostingFolder = course.hosting_folder ? course.hosting_folder : null;
     return {
       courseName: courseName,
@@ -100,7 +100,7 @@ async function refresh_all_showcases_local() {
       .get()
   ).docs.map((doc) => doc.data());
   courses = courses.map((course) => {
-    const title = course.title;
+    const title = course?.title;
     const hosting_folder = course.hosting_folder ? course.hosting_folder : null;
     return {
       title,
@@ -111,7 +111,7 @@ async function refresh_all_showcases_local() {
   //first of all delete all
   // const delAllCourseShowcaseArr = courses.reduce(
   //   (delPromiseArr, currentCourse) => {
-  //     delPromiseArr.push(delete_showcase_local(currentCourse.title));
+  //     delPromiseArr.push(delete_showcase_local(currentCourse?.title));
   //     return delPromiseArr;
   //   },
   //   []
@@ -290,15 +290,15 @@ function generate_showcase_local(existingShowcase = {}) {
     //   courseName + "_" + crypto.randomBytes(20).toString("hex");
     let showcase = {
       ...existingShowcase,
-      title: existingShowcase.title,
+      title: existingShowcase?.title,
       githubRepo:
         existingShowcase.githubRepo ||
-        `https://github.com/El-Nico/${existingShowcase.title}`,
+        `https://github.com/El-Nico/${existingShowcase?.title}`,
       subchannels: [],
       hasSubchannels: true,
     };
 
-    let courseName = existingShowcase.title,
+    let courseName = existingShowcase?.title,
       hostingFolder = existingShowcase.hosting_folder || null;
     // console.log(courseName, hostingFolder);
     downloadCourse(courseName)

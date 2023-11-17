@@ -1,22 +1,28 @@
 #header {
-    grid-area: hd;
+    /* grid-area: hd; */
     background: var(--main-colour);
     color: #fff;
     text-align: center;
-    display: grid; 
+    /* display: flex;  */
     padding-inline: 1rem;
+    padding: 10px;
+    min-height: 52px;
 }
 #header .header-element-container{
    display: flex;
   
-   align-content: center;
    align-items: center;
-   justify-content: space-between;
+   justify-content: center;
+   text-align: center;
+   display: flex; 
+   width: 100%;
+   position: relative;
    
 }
 
 .header-hamburger-menu-button{
     display: none;
+    cursor: pointer;
 }
 
 /* custom select */
@@ -33,9 +39,11 @@
     
 }
 
+
 .header-custom-select {
-    position: relative;
     justify-self: start;
+    position: absolute;
+    left: 10px;
 }
 
 .header-custom-arrow {
@@ -90,30 +98,69 @@
     background: #4d5061;
     cursor: pointer;
 }
+.header-nav-about {
+    position: absolute;
+    right: 10px;
+}
 
 .header-nav-logo {
     color: orange;
     cursor: pointer;
+    margin-left: 280px;
 }
 .header-nav-logo:hover{
     cursor: pointer;
     color: #FED8B1;
 }
+.header-custom-select-mobile {
+    display: none;
+}
 
-@media only screen and (max-width: 800px) {
+.margin-off {
+    margin-left: 0 !important;
+}
+
+@media only screen and (max-width: 1024px) {
+    .header-nav-logo {
+        margin-left: 260px;
+    }
+}
+@media only screen and (max-width: 900px) {
+    .header-nav-logo {
+        margin-left: 0px;
+    }
     .header-hamburger-menu-button{
         display: block;
+        position: absolute;
+        left: 10px;
     }
     #header .header-element-container{
-        display: grid;
+        /* display: grid;
         place-content: center;
         grid-template-rows: 1fr 1fr;
         z-index: 1;
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, 1fr); */
     }
-    #header .header-custom-select{
+    .header-custom-select-mobile {
+        display: block;
+        position: relative;
+        margin-top: 10px;
+        width: 100%;
+    }
+    .header-custom-select-mobile select {
+        width: 100%;
+    }
+    .header-custom-select {
+        display: none;
+    }
+    #header .header-custom-select, #header .header-custom-select-mobile{
         grid-row-start: 3;
         grid-column-start: span 3;
         place-self: center;
     }
+  }
+
+
+  .header-element-container-left {
+    justify-content: start !important;
   }

@@ -121,7 +121,7 @@ function Main() {
               dispatch(setSelectedSubchannel(subchannels[i - 1]));
             }
           }}
-          className="chevron-button"
+          className="chevron-button left"
         >
           <BsChevronLeft></BsChevronLeft>
         </button>
@@ -164,7 +164,7 @@ function Main() {
               dispatch(setSelectedSubchannel(subchannels[i + 1]));
             }
           }}
-          className="chevron-button"
+          className="chevron-button right"
         >
           <BsChevronRight></BsChevronRight>
         </button>
@@ -180,7 +180,11 @@ function Main() {
         {/* {isLoggedIn === true && ( */}
         {/* <div className="main-edit-switch">
           Edit */}
-        <label className="main-switch">
+        <label 
+          className={classNames(
+            !editMode ? "main-switch tooltip" : "main-switch active tooltip")}
+          >
+          <span className="tooltiptext">{editMode ? 'Off Readme' : 'Edit Readme'}</span>
           <input
             type="checkbox"
             onClick={() => {
@@ -226,7 +230,7 @@ function Main() {
         <div className="main-box main-box2" ref={sectionPreviewRef}>
           <iframe
             src={iFrame.url}
-            title={iFrame.title}
+            title={iFrame?.title}
             width={"100%"}
             height={"100%"}
           ></iframe>
