@@ -1,5 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getShowcases } from "../../../utilities/firestore-crud";
+import { useLocation } from "react-router-dom";
 
 export const showcasesSlice = createSlice({
   name: "showcases",
@@ -85,7 +86,7 @@ export const showcasesSlice = createSlice({
     });
     builder.addCase(initializeShowcases.fulfilled, (state, action) => {
       state.loading = false;
-      state.showcases = action.payload;
+      state.showcases = action.payload.showcases;
       state.error = "";
     });
     builder.addCase(initializeShowcases.rejected, (state, action) => {
@@ -106,11 +107,14 @@ export const {
   setIframe,
 } = showcasesSlice.actions;
 
+// const queryParams = new URLSearchParams(location.search);
 //generates pending fulfilled and rejected action type
 export const initializeShowcases = createAsyncThunk(
   "showcases/getShowcases",
   () =>
     getShowcases().then((showcases) => {
-      return showcases;
+      const location = window.location.href;
+      const selectedShowcase = new URL(location).searchParams.get("showcase");
+      return { showcases, selectedShowcase };
     })
 );

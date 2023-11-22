@@ -26,8 +26,23 @@ setShowcasesMiddleware.startListening({
     );
   },
   effect: async (action, listenerApi) => {
-    const showcases = action.payload;
-    listenerApi.dispatch(setSelectedShowcase(showcases[0]));
+    const showcases = action.payload.showcases;
+    let selectedShowcase = showcases.find(
+      (showcase) => showcase.title === action.payload.selectedShowcase
+    );
+    if (!selectedShowcase) {
+      selectedShowcase = showcases[0];
+      // Construct URLSearchParams object instance from current URL querystring.
+      let queryParams = new URLSearchParams(window.location.search);
+
+      // Set new or modify existing parameter value.
+      queryParams.set("showcase", selectedShowcase.title);
+
+      // Replace current querystring with the new one.
+      window.history.replaceState(null, null, "?" + queryParams.toString());
+    }
+
+    listenerApi.dispatch(setSelectedShowcase(selectedShowcase));
   },
 });
 
@@ -127,17 +142,7 @@ setSelectedSubchannelMiddleware.startListening({
   effect: async (action, listenerApi) => {
     const selectedSubchannel = action.payload;
     const state = listenerApi.getState();
-    //handle iframe here
-    const currentPreview = state.showcases.selectedShowcase.subchannels.find(
-      (subch) => subch.lessonName === selectedSubchannel.name
-    );
-    listenerApi.dispatch(
-      setIframe({
-        title: currentPreview.lessonName,
-        url: currentPreview.channel_url,
-      })
-    );
-    listenerApi.dispatch(mainScrollTriggered(true));
+
     //readme for selected subchannel only here because its dependent
     const selectedShowcaseId = state.showcases.selectedShowcase.id;
     getReadme(OWNER, selectedShowcaseId, selectedSubchannel.name)
@@ -181,5 +186,26 @@ setSelectedSubchannelMiddleware.startListening({
           });
         }
       });
+
+    listenerApi.dispatch(mainScrollTriggered(true));
+    //handle iframe here
+    if (selectedSubchannel.mainPreview) {
+      listenerApi.dispatch(
+        setIframe({
+          title: selectedSubchannel.name,
+          url: selectedSubchannel.url,
+        })
+      );
+      return;
+    }
+    const currentPreview = state.showcases.selectedShowcase.subchannels.find(
+      (subch) => subch.lessonName === selectedSubchannel.name
+    );
+    listenerApi.dispatch(
+      setIframe({
+        title: currentPreview.lessonName,
+        url: currentPreview.channel_url,
+      })
+    );
   },
 });

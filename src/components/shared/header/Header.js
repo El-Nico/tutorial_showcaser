@@ -1,7 +1,10 @@
 import "./Header.css";
 import { useDispatch, useSelector } from "react-redux";
-import { setOpenSidebar, setSelectedShowcase } from "../../../redux/features/showcases/showcasesSlice";
-import { useNavigate } from "react-router-dom";
+import {
+  setOpenSidebar,
+  setSelectedShowcase,
+} from "../../../redux/features/showcases/showcasesSlice";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { classNames } from "../../../utilities/general";
 // https://react-icons.github.io/react-icons/search?q=hamburger
@@ -16,35 +19,43 @@ export function Header(props) {
   function changeIsOpenSidebar(e) {
     console.log("E", e);
     if (e) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
       console.log("HIDDEN");
     } else {
-      document.body.style.overflow = 'auto';
+      document.body.style.overflow = "auto";
       console.log("AUTO");
     }
     dispatch(setOpenSidebar(e));
   }
 
+  const [searchParams, setSearchParams] = useSearchParams();
   function changeSelectedShowcase(e) {
     const selectedShowcase = showcases.find(
       (showcase) => showcase?.title === e.target.value
     );
+    setSearchParams({ ["showcase"]: selectedShowcase.title });
     dispatch(setSelectedShowcase(selectedShowcase));
   }
 
   const navigate = useNavigate();
   return (
     <header id="header">
-      <div 
-          className={classNames(
-            !props.showSelect ? "header-element-container-left header-element-container" : "header-element-container"
-      )}>
+      <div
+        className={classNames(
+          !props.showSelect
+            ? "header-element-container-left header-element-container"
+            : "header-element-container"
+        )}
+      >
         {props.showSelect && (
-        <div className="header-hamburger-menu-button" onClick={() => {
-            changeIsOpenSidebar(true);
-          }}>
-          <GiHamburgerMenu></GiHamburgerMenu>
-        </div>
+          <div
+            className="header-hamburger-menu-button"
+            onClick={() => {
+              changeIsOpenSidebar(true);
+            }}
+          >
+            <GiHamburgerMenu></GiHamburgerMenu>
+          </div>
         )}
         {props.showSelect && (
           <div className="header-custom-select">
@@ -65,9 +76,15 @@ export function Header(props) {
         )}
         <div
           className={classNames(
-            !props.showSelect ? "header-nav-logo margin-off" : "header-nav-logo")}
+            !props.showSelect ? "header-nav-logo margin-off" : "header-nav-logo"
+          )}
           onClick={() => {
-            navigate("/home");
+            const searchParams = new URLSearchParams();
+            searchParams.set("showcase", selectedShowcase.title);
+            navigate({
+              pathname: "/home",
+              search: `?${searchParams.toString()}`,
+            });
           }}
         >
           <h2>Project Showcaser</h2>
@@ -99,6 +116,5 @@ export function Header(props) {
         </div>
       </div>
     </header>
-    
   );
 }

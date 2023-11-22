@@ -9,6 +9,7 @@ import {
 import {
   setReadmeSourceProject,
   setReadmeSourceSubchannel,
+  setSelectedShowcase,
   setSelectedSubchannel,
 } from "../../../../redux/features/showcases/showcasesSlice";
 import MDEditor from "@uiw/react-md-editor";
@@ -24,21 +25,19 @@ function Main() {
   const dispatch = useDispatch();
   const isLoggedIn = useSelector((state) => state.applicationState.isLoggedIn);
   const editMode = useSelector((state) => state.applicationState.editMode);
-  const projectReadme = useSelector(
-    (state) => state.showcases.readmeSourceProject
-  );
-  const subchannelReadme = useSelector(
-    (state) => state.showcases.readmeSourceSubchannel
-  );
-  const iFrame = useSelector((state) => state.showcases.iFrame);
+
+  const showcases = useSelector((state) => state.showcases);
+
+  const projectReadme = showcases.readmeSourceProject;
+  const subchannelReadme = showcases.readmeSourceSubchannel;
+  const iFrame = showcases.iFrame;
+
   const selectedMenuButton = useSelector(
     (state) => state.applicationState.selectedMenuButton
   );
 
-  const subchannels = useSelector((state) => state.showcases.subchannels);
-  const selectedSubchannel = useSelector(
-    (state) => state.showcases.selectedSubchannel
-  );
+  const subchannels = showcases.subchannels;
+  const selectedSubchannel = showcases.selectedSubchannel;
   const shouldTriggerMainScroll = useSelector(
     (state) => state.applicationState.triggerMainScroll
   );
@@ -180,11 +179,14 @@ function Main() {
         {/* {isLoggedIn === true && ( */}
         {/* <div className="main-edit-switch">
           Edit */}
-        <label 
+        <label
           className={classNames(
-            !editMode ? "main-switch tooltip" : "main-switch active tooltip")}
-          >
-          <span className="tooltiptext">{editMode ? 'Off Readme' : 'Edit Readme'}</span>
+            !editMode ? "main-switch tooltip" : "main-switch active tooltip"
+          )}
+        >
+          <span className="tooltiptext">
+            {editMode ? "Off Readme" : "Edit Readme"}
+          </span>
           <input
             type="checkbox"
             onClick={() => {
