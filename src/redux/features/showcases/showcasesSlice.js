@@ -1,6 +1,9 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { getShowcases } from "../../../utilities/firestore-crud";
-import { useLocation } from "react-router-dom";
+
+const location = window.location.href;
+const selectedShowcase =
+  new URL(location).searchParams.get("showcase") || "example";
 
 export const showcasesSlice = createSlice({
   name: "showcases",
@@ -10,7 +13,7 @@ export const showcasesSlice = createSlice({
     showcases: [{ title: "example" }],
     isOpenSidebar: false,
     selectedShowcase: {
-      title: "example",
+      title: selectedShowcase,
       previewUrl: "http://example.com/",
     },
     subchannels: [
@@ -113,8 +116,9 @@ export const initializeShowcases = createAsyncThunk(
   "showcases/getShowcases",
   () =>
     getShowcases().then((showcases) => {
-      const location = window.location.href;
-      const selectedShowcase = new URL(location).searchParams.get("showcase");
+      // const location = window.location.href;
+      // const selectedShowcase = new URL(location).searchParams.get("showcase");
+      // console.log(selectedShowcase);
       return { showcases, selectedShowcase };
     })
 );

@@ -14,7 +14,6 @@ function App() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    // store.dispatch(initializeShowcases());
     //track login state
     onAuthStateChanged(auth, (user) => {
       if (user) {

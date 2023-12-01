@@ -95,7 +95,9 @@
 }
 
 .header-nav-about:hover {
-    background: #4d5061;
+    /* background: #4d5061; */
+    color: #FED8B1;
+    /* filter: brightness(50%); */
     cursor: pointer;
 }
 .header-nav-about {

@@ -98,23 +98,25 @@ export function Header(props) {
           <h3>About</h3>
         </div>
       </div>
-      <div className="header-select">
-        <div className="header-custom-select-mobile">
-          <select
-            value={selectedShowcase?.title}
-            onChange={(e) => {
-              changeSelectedShowcase(e);
-            }}
-          >
-            {showcases.map((showcase) => (
-              <option key={showcase?.title} value={showcase?.title}>
-                {showcase?.title}
-              </option>
-            ))}
-          </select>
-          <span className="header-custom-arrow"></span>
+      {props.showSelect && (
+        <div className="header-select">
+          <div className="header-custom-select-mobile">
+            <select
+              value={selectedShowcase?.title}
+              onChange={(e) => {
+                changeSelectedShowcase(e);
+              }}
+            >
+              {showcases.map((showcase) => (
+                <option key={showcase?.title} value={showcase?.title}>
+                  {showcase?.title}
+                </option>
+              ))}
+            </select>
+            <span className="header-custom-arrow"></span>
+          </div>
         </div>
-      </div>
+      )}
     </header>
   );
 }

@@ -19,6 +19,10 @@
     color: #fff;
 }
 
+.footer a:hover{
+    color: #FED8B1;
+}
+
 .footer .footer-socials{
     /* background:#4d5061; */
     display: flex;

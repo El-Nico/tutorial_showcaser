@@ -31,7 +31,6 @@ export async function getReadme(owner, repo, dir) {
   });
 
   try {
-    let console = { log: () => {} };
     const data = await octokit.request(
       "GET /repos/{owner}/{repo}/readme/{dir}",
       {

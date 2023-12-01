@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useRef } from "react";
+import React, { useCallback, useLayoutEffect, useRef } from "react";
 import "./Main.css";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -9,7 +9,6 @@ import {
 import {
   setReadmeSourceProject,
   setReadmeSourceSubchannel,
-  setSelectedShowcase,
   setSelectedSubchannel,
 } from "../../../../redux/features/showcases/showcasesSlice";
 import MDEditor from "@uiw/react-md-editor";
@@ -42,11 +41,30 @@ function Main() {
     (state) => state.applicationState.triggerMainScroll
   );
 
+  const handleScroll = useCallback(() => {
+    const parent = scrollDivRef.current.getBoundingClientRect().top;
+    const aboutRef = aboutProjectRef.current.getBoundingClientRect().top;
+    const sectionRef = sectionPreviewRef.current.getBoundingClientRect().top;
+    const aboutSecRef = aboutSectionRef.current.getBoundingClientRect().top;
+    const send = {
+      parent,
+      children: [
+        { top: aboutRef, key: "aboutProject" },
+        { top: sectionRef, key: "sectionPreview" },
+        { top: aboutSecRef, key: "aboutSection" },
+      ],
+    };
+    return dispatch(setSelectedMenuButton(send));
+  }, [dispatch]);
+
   const scrollDivRef = useRef(null);
   const aboutProjectRef = useRef(null);
   const sectionPreviewRef = useRef(null);
   const aboutSectionRef = useRef(null);
 
+  useLayoutEffect(() => {
+    handleScroll();
+  }, [handleScroll]);
   useLayoutEffect(() => {
     if (shouldTriggerMainScroll) {
       mainScrollTo("sectionPreview");
@@ -88,21 +106,6 @@ function Main() {
     });
   }
 
-  function handleScroll() {
-    const parent = scrollDivRef.current.getBoundingClientRect().top;
-    const aboutRef = aboutProjectRef.current.getBoundingClientRect().top;
-    const sectionRef = sectionPreviewRef.current.getBoundingClientRect().top;
-    const aboutSecRef = aboutSectionRef.current.getBoundingClientRect().top;
-    const send = {
-      parent,
-      children: [
-        { top: aboutRef, key: "aboutProject" },
-        { top: sectionRef, key: "sectionPreview" },
-        { top: aboutSecRef, key: "aboutSection" },
-      ],
-    };
-    return dispatch(setSelectedMenuButton(send));
-  }
   function mainScrollTo(section) {
     const relOffset = selectedMenuButton.offsetMap[section];
     scrollDivRef.current.scrollBy({ top: relOffset, behavior: "smooth" });

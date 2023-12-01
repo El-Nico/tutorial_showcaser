@@ -7,7 +7,7 @@ export function About() {
     <div id="About">
       <Header showSelect={false} />
       <main>
-        <div>
+        <div className="about-about-text">
           Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eveniet
           repudiandae saepe porro quos vero hic sequi itaque amet est,
           distinctio ea nemo architecto eum fugiat id quaerat dolores molestiae

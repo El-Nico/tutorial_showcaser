@@ -21,3 +21,10 @@
 display: grid;
 place-content: center; */
 }
+
+.about-about-text{
+    display: grid;
+    place-content: center;
+    background: lightgray;
+    min-height: 50vh;
+}
