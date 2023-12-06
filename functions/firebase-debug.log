@@ -949,3 +949,52 @@ Issues? Report them at https://github.com/firebase/firebase-tools/issues and att
    - URL: "https://oauth2.googleapis.com/token"
    - Be careful, this may be a production service. {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-test_rand"},"extension":{},"message":"Google API requested!\n   - URL: \"https://oauth2.googleapis.com/token\"\n   - Be careful, this may be a production service."}}
 [debug] [2023-12-06T13:21:28.578Z] File C:\Users\Nicholas\Desktop\2023\tutorial_course_showcaser\tutorial_showcaser\functions\index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File C:\\Users\\Nicholas\\Desktop\\2023\\tutorial_course_showcaser\\tutorial_showcaser\\functions\\index.js changed, reloading triggers"}}
+[debug] [2023-12-06T13:21:29.580Z] Validating nodejs source
+[warn] !  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[debug] [2023-12-06T13:21:32.399Z] > [functions] package.json contents: {
+  "name": "functions",
+  "description": "Cloud Functions for Firebase",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log",
+    "prebuild": "node generate-google-api-credentials.js",
+    "preserve": "node generate-google-api-credentials.js"
+  },
+  "engines": {
+    "node": "16"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "async-get-file": "^1.0.4",
+    "decompress": "^4.2.1",
+    "dotenv": "^16.0.3",
+    "firebase-admin": "^11.5.0",
+    "firebase-functions": "^4.2.0",
+    "googleapis": "^118.0.0",
+    "node-gzip": "^1.1.2"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^3.0.0"
+  },
+  "private": true
+}
+[debug] [2023-12-06T13:21:32.400Z] Building nodejs source
+[debug] [2023-12-06T13:21:32.400Z] Failed to find version of module node: reached end of search path C:\Users\Nicholas\Desktop\2023\tutorial_course_showcaser\tutorial_showcaser\functions\node_modules
+[warn] !  functions: Your requested "node" version "16" doesn't match your global version "18". Using node@18 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2023-12-06T13:21:32.404Z] Could not find functions.yaml. Must use http discovery
+[debug] [2023-12-06T13:21:32.414Z] Found firebase-functions binary at 'C:\Users\Nicholas\Desktop\2023\tutorial_course_showcaser\tutorial_showcaser\functions\node_modules\.bin\firebase-functions'
+[info] Serving at port 8779
+
+[debug] [2023-12-06T13:21:34.628Z] Got response from /__/functions.yaml {"endpoints":{"generate_all_showcases":{"availableMemoryMb":1024,"timeoutSeconds":300,"minInstances":null,"maxInstances":10,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"generate_all_showcases"},"delete_all_showcases":{"availableMemoryMb":1024,"timeoutSeconds":300,"minInstances":null,"maxInstances":10,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"delete_all_showcases"},"test_rand":{"timeoutSeconds":540,"minInstances":null,"maxInstances":null,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"test_rand"},"refresh_all_showcases":{"availableMemoryMb":1024,"timeoutSeconds":540,"minInstances":null,"maxInstances":10,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"scheduleTrigger":{"schedule":"every day 00:00","retryConfig":{}},"entryPoint":"refresh_all_showcases"},"delete_one_channel":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"httpsTrigger":{},"entryPoint":"delete_one_channel"},"generate_showcase":{"availableMemoryMb":1024,"timeoutSeconds":300,"minInstances":null,"maxInstances":10,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"generate_showcase"},"delete_showcase":{"availableMemoryMb":null,"timeoutSeconds":180,"minInstances":null,"maxInstances":10,"ingressSettings":null,"concurrency":null,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","labels":{},"httpsTrigger":{},"entryPoint":"delete_showcase"},"delete_all_preview_channels":{"platform":"gcfv1","availableMemoryMb":null,"timeoutSeconds":null,"minInstances":null,"maxInstances":null,"ingressSettings":null,"serviceAccountEmail":null,"vpc":null,"httpsTrigger":{},"entryPoint":"delete_all_preview_channels"}},"specVersion":"v1alpha1","requiredAPIs":[{"api":"cloudscheduler.googleapis.com","reason":"Needed for scheduled functions."}]}
+[info] shutdown requested via /__/quitquitquit
+
+[info] +  functions: Loaded functions definitions from source: generate_all_showcases, delete_all_showcases, test_rand, refresh_all_showcases, delete_one_channel, generate_showcase, delete_showcase, delete_all_preview_channels. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: generate_all_showcases, delete_all_showcases, test_rand, refresh_all_showcases, delete_one_channel, generate_showcase, delete_showcase, delete_all_preview_channels."}}
+[debug] [2023-12-06T13:21:34.657Z] [worker-pool] Shutting down IDLE worker (us-central1-test_rand) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Shutting down IDLE worker (us-central1-test_rand)"}}
+[debug] [2023-12-06T13:21:34.657Z] [worker-us-central1-test_rand-f5455040-8999-4e18-9cc5-01e8cf6d1f69]: FINISHING {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-test_rand"},"extension":{},"message":"[worker-us-central1-test_rand-f5455040-8999-4e18-9cc5-01e8cf6d1f69]: FINISHING"}}
+[debug] [2023-12-06T13:21:34.675Z] [worker-us-central1-test_rand-f5455040-8999-4e18-9cc5-01e8cf6d1f69]: exited {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-test_rand"},"extension":{},"message":"[worker-us-central1-test_rand-f5455040-8999-4e18-9cc5-01e8cf6d1f69]: exited"}}
+[debug] [2023-12-06T13:21:34.676Z] [worker-us-central1-test_rand-f5455040-8999-4e18-9cc5-01e8cf6d1f69]: FINISHED {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-test_rand"},"extension":{},"message":"[worker-us-central1-test_rand-f5455040-8999-4e18-9cc5-01e8cf6d1f69]: FINISHED"}}
+[debug] [2023-12-06T13:21:59.922Z] File C:\Users\Nicholas\Desktop\2023\tutorial_course_showcaser\tutorial_showcaser\functions\index.js changed, reloading triggers {"metadata":{"emulator":{"name":"functions"},"message":"File C:\\Users\\Nicholas\\Desktop\\2023\\tutorial_course_showcaser\\tutorial_showcaser\\functions\\index.js changed, reloading triggers"}}
