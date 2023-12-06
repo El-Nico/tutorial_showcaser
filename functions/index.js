@@ -132,12 +132,18 @@ async function refresh_all_showcases_local() {
 exports.test_rand = onRequest(
   { timeoutSeconds: 540, memory: "1.5GiB" },
   async (req, res) => {
-    const results = await refresh_all_showcases_local();
+    // http://127.0.0.1:5001/tutorial-showcaser/us-central1/test_rand
+
+    // const results = await refresh_all_showcases_local();
     // const results = await generate_showcase_local({
     //   title: "react_course",
     //   hosting_folder: "public",
     // });
     // const results = await generate_showcase_local("css_tutorials", "");
+    // const results = await generate_showcase_local({
+    //   title: "data_structures_algorithms",
+    //   hosting_folder: "build",
+    // });
 
     //test these next
     // const results = await delete_all_showcases_local();
@@ -145,6 +151,7 @@ exports.test_rand = onRequest(
 
     // const results = await delete_showcase_local("react_course");
     // const results = await delete_showcase_local("css_tutorials");
+    // const results = await delete_showcase_local("data_structures_algorithms");
     res.status(200).send(results);
   }
 );
@@ -297,6 +304,8 @@ function generate_showcase_local(existingShowcase = {}) {
       subchannels: [],
       hasSubchannels: true,
     };
+
+    // console.log(showcase);
 
     let courseName = existingShowcase?.title,
       hostingFolder = existingShowcase.hosting_folder || null;
