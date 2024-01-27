@@ -8,11 +8,16 @@ export function About() {
       <Header showSelect={false} />
       <main>
         <div className="about-about-text">
-          Lorem ipsum dolor sit amet, consectetur adipisicing elit. Eveniet
-          repudiandae saepe porro quos vero hic sequi itaque amet est,
-          distinctio ea nemo architecto eum fugiat id quaerat dolores molestiae
-          omnis quo eius dolor sit aliquid. Ipsum ab perferendis aliquam modi
-          velit, cupiditate atque at. Blanditiis nisi a porro sit laborum.
+          A React web application that dynamically generates web showcases of
+          selected projects from my GitHub repositories using the firebase
+          hosting API, the GitHub API and firebase cloud functions.{" "}
+          <a
+            href="https://nicholas-eruba.com/articles/project_showcaser"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Learn More
+          </a>
         </div>
       </main>
       <Footer />

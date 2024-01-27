@@ -166,6 +166,7 @@ exports.refresh_all_showcases = onSchedule(
   },
   async (event) => {
     const results = await refresh_all_showcases_local();
+    if (results) res.status(200).send(results);
     // console.log(results);
   }
 );

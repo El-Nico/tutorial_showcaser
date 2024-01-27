@@ -26,13 +26,13 @@ export const showcasesSlice = createSlice({
     },
     readmeSourceProject: {
       repo: "https://github.com/",
-      markup: "# Example",
+      markup: "# Readme Not Available or Loading",
       sha: null,
       path: null,
     },
     readmeSourceSubchannel: {
       repo: "https://github.com/",
-      markup: "# Example",
+      markup: "# Readme Not Available or Loading",
       sha: null,
       path: null,
     },
