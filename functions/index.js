@@ -129,32 +129,36 @@ async function refresh_all_showcases_local() {
 
   return { deleted: deletedAll, generated: genResults };
 }
-exports.test_rand = onRequest(
-  { timeoutSeconds: 540, memory: "1.5GiB" },
-  async (req, res) => {
-    // http://127.0.0.1:5001/tutorial-showcaser/us-central1/test_rand
 
-    const results = await refresh_all_showcases_local();
-    // const results = await generate_showcase_local({
-    //   title: "react_course",
-    //   hosting_folder: "public",
-    // });
-    // const results = await generate_showcase_local("css_tutorials", "");
-    // const results = await generate_showcase_local({
-    //   title: "data_structures_algorithms",
-    //   hosting_folder: "build",
-    // });
+//TEST AND DEBUG FUNCTIONS LOCALLY
+// exports.test_rand = onRequest(
+//   { timeoutSeconds: 540, memory: "1.5GiB" },
+//   async (req, res) => {
+//     // http://127.0.0.1:5001/tutorial-showcaser/us-central1/test_rand
 
-    //test these next
-    // const results = await delete_all_showcases_local();
-    // const results = await generate_all_showcases_local();
+//     const results = await refresh_all_showcases_local();
+//     // const results = await generate_showcase_local({
+//     //   title: "react_course",
+//     //   hosting_folder: "public",
+//     // });
+//     // const results = await generate_showcase_local("css_tutorials", "");
+//     // const results = await generate_showcase_local({
+//     //   title: "data_structures_algorithms",
+//     //   hosting_folder: "build",
+//     // });
 
-    // const results = await delete_showcase_local("react_course");
-    // const results = await delete_showcase_local("css_tutorials");
-    // const results = await delete_showcase_local("data_structures_algorithms");
-    res.status(200).send(results);
-  }
-);
+//     //test these next
+//     // const results = await delete_all_showcases_local();
+//     // const results = await generate_all_showcases_local();
+
+//     // const results = await delete_showcase_local("react_course");
+//     // const results = await delete_showcase_local("css_tutorials");
+//     // const results = await delete_showcase_local("data_structures_algorithms");
+//     res.status(200).send(results);
+//   }
+// );
+
+//THIS IS THE MAIN FUNCTION/SCHEDULES THE SHOWCASE EVERYDAY AT MIDNIGHT
 //create a function, create all, deleteall, but for now lets just do schedule
 exports.refresh_all_showcases = onSchedule(
   //every night at midnight
@@ -577,8 +581,7 @@ function delete_all_preview_channels_local() {
     });
   });
 }
-//////////////////////////end of the begging of the end/////////////////////
-//BEST SOLUTION PROLLY JUST GET RID OF ALL THE READMES
+///////////////////////////////////////////////
 
 // NEED TO UNDERSTAND THIS ///
 /* In addition, when a subsequent invocation is executed in the same environment,
