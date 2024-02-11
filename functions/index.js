@@ -134,7 +134,7 @@ exports.test_rand = onRequest(
   async (req, res) => {
     // http://127.0.0.1:5001/tutorial-showcaser/us-central1/test_rand
 
-    // const results = await refresh_all_showcases_local();
+    const results = await refresh_all_showcases_local();
     // const results = await generate_showcase_local({
     //   title: "react_course",
     //   hosting_folder: "public",
@@ -190,7 +190,7 @@ function download(url, dest) {
   });
 }
 
-////////////////////////////the begging of the end///////////////////////////
+//////////////////////////////////
 
 function downloadCourse(courseName) {
   return new Promise((resolve, reject) => {
