@@ -396,7 +396,7 @@ exports.deleteVersion = function (site_id, access_token, version_id) {
       res.on("end", function () {
         const body = Buffer.concat(chunks);
         const bodyString = body.toString();
-        console.log("del ver", bodyString);
+        // console.log("del ver", bodyString);
         resolve(bodyString);
       });
     });

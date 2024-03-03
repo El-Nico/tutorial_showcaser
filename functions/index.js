@@ -102,12 +102,14 @@ async function refresh_all_showcases_local() {
   courses = courses.map((course) => {
     const title = course?.title;
     const hosting_folder = course.hosting_folder ? course.hosting_folder : null;
+    const mainBranch = course.mainBranch
     return {
       title,
       hosting_folder,
+      mainBranch
     };
   });
-  console.log(courses);
+  // console.log(courses);
   //first of all delete all
   // const delAllCourseShowcaseArr = courses.reduce(
   //   (delPromiseArr, currentCourse) => {
@@ -123,7 +125,14 @@ async function refresh_all_showcases_local() {
   //then generate all
   let genResults = [];
   for (const course of courses) {
-    let generatedShowcase = await generate_showcase_local(course);
+    
+   let generatedShowcase=false;
+    try {
+        generatedShowcase = await generate_showcase_local(course)
+    } catch (error) {
+      console.log(error)
+      continue
+    };
     genResults.push(generatedShowcase);
   }
 
@@ -131,32 +140,32 @@ async function refresh_all_showcases_local() {
 }
 
 //TEST AND DEBUG FUNCTIONS LOCALLY
-// exports.test_rand = onRequest(
-//   { timeoutSeconds: 540, memory: "1.5GiB" },
-//   async (req, res) => {
-//     // http://127.0.0.1:5001/tutorial-showcaser/us-central1/test_rand
+exports.test_rand = onRequest(
+  { timeoutSeconds: 540, memory: "1.5GiB" },
+  async (req, res) => {
+    // http://127.0.0.1:5001/tutorial-showcaser/us-central1/test_rand
 
-//     const results = await refresh_all_showcases_local();
-//     // const results = await generate_showcase_local({
-//     //   title: "react_course",
-//     //   hosting_folder: "public",
-//     // });
-//     // const results = await generate_showcase_local("css_tutorials", "");
-//     // const results = await generate_showcase_local({
-//     //   title: "data_structures_algorithms",
-//     //   hosting_folder: "build",
-//     // });
+    const results = await refresh_all_showcases_local();
+    // const results = await generate_showcase_local({
+    //   title: "react_course",
+    //   hosting_folder: "public",
+    // });
+    // const results = await generate_showcase_local("css_tutorials", "");
+    // const results = await generate_showcase_local({
+    //   title: "data_structures_algorithms",
+    //   hosting_folder: "build",
+    // });
 
-//     //test these next
-//     // const results = await delete_all_showcases_local();
-//     // const results = await generate_all_showcases_local();
+    //test these next
+    // const results = await delete_all_showcases_local();
+    // const results = await generate_all_showcases_local();
 
-//     // const results = await delete_showcase_local("react_course");
-//     // const results = await delete_showcase_local("css_tutorials");
-//     // const results = await delete_showcase_local("data_structures_algorithms");
-//     res.status(200).send(results);
-//   }
-// );
+    // const results = await delete_showcase_local("react_course");
+    // const results = await delete_showcase_local("css_tutorials");
+    // const results = await delete_showcase_local("data_structures_algorithms");
+    res.status(200).send(results);
+  }
+);
 
 //THIS IS THE MAIN FUNCTION/SCHEDULES THE SHOWCASE EVERYDAY AT MIDNIGHT
 //create a function, create all, deleteall, but for now lets just do schedule
@@ -196,13 +205,14 @@ function download(url, dest) {
 
 //////////////////////////////////
 
-function downloadCourse(courseName) {
+function downloadCourse(courseName, mainBranch) {
   return new Promise((resolve, reject) => {
     const url =
       MY_APP.GITHUB_DOWNLOAD_URL.START +
       courseName +
-      MY_APP.GITHUB_DOWNLOAD_URL.END;
+      MY_APP.GITHUB_DOWNLOAD_URL.END+mainBranch;
     const dest = os.tmpdir() + "/temp.zip";
+    // console.log(url)
 
     download(url, dest)
       .catch((error) => {
@@ -212,6 +222,7 @@ function downloadCourse(courseName) {
         return decompress(dest, os.tmpdir()); //"./"
       })
       .then((files) => {
+        // console.log(files)
         // console.log(os.tmpdir() + files[0].path);
         const parentDir = os.tmpdir() + "/" + files[0].path;
         //delete temp.zip
@@ -238,17 +249,10 @@ function deleteAllExceptFolder(src, folder) {
 function buildFiles(courseDir, hos) {
   return new Promise((resolve, reject) => {
     const files = fs.readdirSync(courseDir);
-    // remove all readme md not necessary to render preview
-    // console.log(files);
     let cFiles = {};
-    // let cFilesTemp = [];
     files.forEach((dir) => {
-      //first  layer
-      // console.log("FILE 11111111111");
-      // console.log(dir);
       readDir = courseDir + dir;
       if (dir.toLowerCase() === "readme.md") {
-        // console.log("im here now", readDir);
         //DELETE README HERE FOR NOW
         fs.rmSync(readDir, { recursive: true, force: true });
         // console.log("i didnt make it here uuu", readDir);
@@ -258,19 +262,29 @@ function buildFiles(courseDir, hos) {
       const subFiles = fs.readdirSync(readDir);
       const cFilesTemp = [];
       let publicFolder = readDir;
-      //also conditionally check for and deal with readme here
-      ///////////////////////////////////////////////
+      // console.log(courseDir)
+      if(readDir.includes('01_introduction')){
+        console.log(hos)
+        console.log(subFiles)
+      }
+
+      // console.log(subFiles)
       if (subFiles.includes(hos)) {
-        /// delete all others async
-        /// index public async
         publicFolder = readDir + "/" + hos;
         //do this async?
         deleteAllExceptFolder(readDir, hos);
       }
+      // else if(!subFiles.includes('index.html')){
+
+      //   return;
+      // }
       for (const filePath of walkSync(publicFolder)) {
-        console.log(filePath);
+        if(readDir.includes('introduction')){
+          console.log(filePath)
+        }
+  
+        // console.log(filePath);
         if (filePath.toLowerCase().endsWith("readme.md")) {
-          console.log("read", filePath);
           fs.rmSync(filePath, { recursive: true, force: true });
           continue;
         }
@@ -313,9 +327,9 @@ function generate_showcase_local(existingShowcase = {}) {
     // console.log(showcase);
 
     let courseName = existingShowcase?.title,
-      hostingFolder = existingShowcase.hosting_folder || null;
+      hostingFolder = existingShowcase.hosting_folder || null, mainBranch=showcase.mainBranch;
     // console.log(courseName, hostingFolder);
-    downloadCourse(courseName)
+    downloadCourse(courseName,mainBranch)
       .then((courseDir) => {
         coursefolderName = courseDir;
         return buildFiles(courseDir, hostingFolder);

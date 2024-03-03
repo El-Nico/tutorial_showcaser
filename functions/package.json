@@ -11,7 +11,7 @@
     "preserve": "node generate-google-api-credentials.js"
   },
   "engines": {
-    "node": "16"
+    "node": "18"
   },
   "main": "index.js",
   "dependencies": {
